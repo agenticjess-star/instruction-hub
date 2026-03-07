@@ -1,5 +1,6 @@
-import { Link, useLocation } from "react-router-dom";
-import { Layers, LayoutDashboard, FileText, MessageSquare, Sparkles } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Layers, LayoutDashboard, MessageSquare, Sparkles, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -9,6 +10,15 @@ const navItems = [
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
+
+  const initial = user?.email?.[0]?.toUpperCase() ?? "U";
 
   return (
     <div className="min-h-screen bg-background">
@@ -41,10 +51,17 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
               })}
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-[10px] font-medium text-primary">
-              U
+              {initial}
             </div>
+            <button
+              onClick={handleSignOut}
+              className="text-muted-foreground/30 hover:text-foreground transition-colors p-1"
+              title="Sign out"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       </nav>
