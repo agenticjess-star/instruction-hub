@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Sparkles, ArrowRight, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { instructionSets, threads } from "@/lib/seed-data";
+import { threads } from "@/lib/seed-data";
 import AppLayout from "@/components/AppLayout";
 
 const insights = [
@@ -34,40 +34,42 @@ const insights = [
 const OptimizationWorkspace = () => {
   return (
     <AppLayout>
-      <div className="max-w-[1200px] mx-auto px-4 py-8">
+      <div className="max-w-[1000px] mx-auto px-5 py-8">
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-1">
-            <Sparkles className="w-5 h-5 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground">Optimization Workspace</h1>
+          <div className="flex items-center gap-2 mb-1">
+            <Sparkles className="w-4 h-4 text-primary/60" />
+            <h1 className="text-xl font-semibold text-foreground tracking-tight">Optimization</h1>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">AI-generated insights from your linked threads to improve instructions</p>
+          <p className="text-xs text-muted-foreground mt-0.5">AI-generated insights from linked threads</p>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {insights.map((group, gi) => (
             <motion.div
               key={group.instructionId}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: gi * 0.1 }}
-              className="glass rounded-xl p-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: gi * 0.08 }}
+              className="rounded-lg border border-border/20 overflow-hidden"
             >
-              <h2 className="font-semibold text-foreground mb-1">{group.title}</h2>
-              <p className="text-xs text-muted-foreground mb-4">
-                Based on {threads.filter(t => t.linkedInstructionIds.includes(group.instructionId)).length} linked thread(s)
-              </p>
-              <div className="space-y-3">
-                {group.suggestions.map((s, i) => (
-                  <div key={i} className="flex items-start gap-3 p-3 rounded-lg surface-2">
-                    <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-foreground/80 leading-relaxed">{s}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4">
-                <Button size="sm" variant="outline" className="text-xs border-border text-foreground">
-                  Apply Suggestions <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
+              <div className="bg-card/20 p-5">
+                <h2 className="font-medium text-sm text-foreground mb-0.5">{group.title}</h2>
+                <p className="text-[10px] text-muted-foreground/40 mb-4 font-mono">
+                  {threads.filter(t => t.linkedInstructionIds.includes(group.instructionId)).length} linked thread(s)
+                </p>
+                <div className="space-y-2">
+                  {group.suggestions.map((s, i) => (
+                    <div key={i} className="flex items-start gap-2.5 p-3 rounded bg-background border border-border/10">
+                      <CheckCircle className="w-3 h-3 text-primary/40 mt-0.5 flex-shrink-0" />
+                      <p className="text-[11px] text-foreground/60 leading-relaxed">{s}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4">
+                  <Button size="sm" variant="ghost" className="text-[10px] text-muted-foreground/40 hover:text-foreground h-7">
+                    Apply Suggestions <ArrowRight className="w-2.5 h-2.5 ml-1" />
+                  </Button>
+                </div>
               </div>
             </motion.div>
           ))}
