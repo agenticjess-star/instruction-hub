@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Globe, Clock, MessageSquare, Tag as TagIcon, CheckCircle, Copy, RotateCcw } from "lucide-react";
+import { ArrowLeft, Globe, Clock, MessageSquare, CheckCircle, Copy, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { instructionSets, threads, tags } from "@/lib/seed-data";
 import AppLayout from "@/components/AppLayout";
@@ -18,7 +18,7 @@ const InstructionDetail = () => {
     return (
       <AppLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <p className="text-muted-foreground">Instruction set not found.</p>
+          <p className="text-xs text-muted-foreground">Instruction set not found.</p>
         </div>
       </AppLayout>
     );
@@ -35,51 +35,50 @@ const InstructionDetail = () => {
 
   return (
     <AppLayout>
-      <div className="max-w-[1200px] mx-auto px-4 py-8">
-        {/* Header */}
-        <Link to="/dashboard" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Back to dashboard
+      <div className="max-w-[1000px] mx-auto px-5 py-8">
+        <Link to="/dashboard" className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground/50 hover:text-foreground mb-6 transition-colors">
+          <ArrowLeft className="w-3 h-3" /> Back
         </Link>
 
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-5">
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-foreground">{instruction.name}</h1>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-xl font-semibold text-foreground tracking-tight">{instruction.name}</h1>
               {prodVersion && (
-                <span className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-success/10 text-success">
-                  <Globe className="w-3 h-3" /> Production v{prodVersion.versionNumber}
+                <span className="flex items-center gap-1 text-[9px] font-medium px-1.5 py-0.5 rounded bg-success/8 text-success border border-success/10">
+                  <Globe className="w-2.5 h-2.5" /> v{prodVersion.versionNumber}
                 </span>
               )}
             </div>
-            <p className="text-sm text-muted-foreground mt-1">{instruction.description}</p>
+            <p className="text-xs text-muted-foreground mt-1">{instruction.description}</p>
           </div>
           {prodVersion && (
             <Link to={`/p/${instruction.slug}`}>
-              <Button size="sm" variant="outline" className="border-border text-foreground">
-                <Globe className="w-4 h-4 mr-2" /> View Public Endpoint
+              <Button size="sm" variant="outline" className="border-border/40 text-xs h-7 text-muted-foreground hover:text-foreground">
+                <Globe className="w-3 h-3 mr-1.5" /> Endpoint
               </Button>
             </Link>
           )}
         </div>
 
-        {/* Tags & Meta */}
-        <div className="flex flex-wrap items-center gap-2 mb-6">
+        {/* Tags */}
+        <div className="flex flex-wrap items-center gap-1.5 mb-6">
           {instruction.tags.map(t => (
-            <span key={t} className="text-xs px-2.5 py-1 rounded-full surface-2 text-muted-foreground">{getTagName(t)}</span>
+            <span key={t} className="text-[9px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground/60">{getTagName(t)}</span>
           ))}
-          <span className="text-xs text-muted-foreground ml-2">Updated {new Date(instruction.updatedAt).toLocaleDateString()}</span>
+          <span className="text-[10px] text-muted-foreground/30 ml-1 font-mono">{new Date(instruction.updatedAt).toLocaleDateString()}</span>
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 mb-6 border-b border-border">
+        <div className="flex items-center gap-0.5 mb-6">
           {(["editor", "versions", "threads"] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+              className={`px-3 py-1.5 text-[11px] font-medium transition-all duration-300 rounded ${
                 activeTab === tab
-                  ? "border-primary text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
+                  ? "text-primary bg-primary/5"
+                  : "text-muted-foreground/50 hover:text-foreground"
               }`}
             >
               {tab === "editor" ? "Editor" : tab === "versions" ? `Versions (${instruction.versions.length})` : `Threads (${linkedThreads.length})`}
@@ -89,18 +88,18 @@ const InstructionDetail = () => {
 
         {/* Editor Tab */}
         {activeTab === "editor" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <div className="glass rounded-xl p-1">
-              <div className="rounded-lg surface-2 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs text-muted-foreground font-mono">
-                    v{latestVersion.versionNumber} · {latestVersion.isProduction ? "Production" : "Draft"}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
+            <div className="rounded-lg border border-border/20 overflow-hidden">
+              <div className="bg-card/40 backdrop-blur-xl p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] text-muted-foreground/40 font-mono tracking-wider">
+                    v{latestVersion.versionNumber} · {latestVersion.isProduction ? "production" : "draft"}
                   </span>
-                  <Button size="sm" variant="ghost" onClick={() => copyContent(latestVersion.content)} className="text-muted-foreground hover:text-foreground">
-                    <Copy className="w-3.5 h-3.5 mr-1.5" /> Copy
+                  <Button size="sm" variant="ghost" onClick={() => copyContent(latestVersion.content)} className="text-muted-foreground/40 hover:text-foreground h-6 text-[10px]">
+                    <Copy className="w-3 h-3 mr-1" /> Copy
                   </Button>
                 </div>
-                <pre className="font-mono text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">{latestVersion.content}</pre>
+                <pre className="font-mono text-xs text-foreground/70 whitespace-pre-wrap leading-relaxed">{latestVersion.content}</pre>
               </div>
             </div>
           </motion.div>
@@ -108,42 +107,39 @@ const InstructionDetail = () => {
 
         {/* Versions Tab */}
         {activeTab === "versions" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-            {[...instruction.versions].reverse().map((v, i) => (
-              <div key={v.id} className="glass rounded-xl p-5 relative">
-                {i < instruction.versions.length - 1 && (
-                  <div className="absolute left-8 top-full w-px h-4 bg-border" />
-                )}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="space-y-px rounded-lg overflow-hidden border border-border/20">
+            {[...instruction.versions].reverse().map((v) => (
+              <div key={v.id} className="bg-background hover:bg-card/20 transition-colors duration-500 p-4">
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      v.isProduction ? "bg-success/10" : "surface-2"
+                  <div className="flex items-start gap-2.5">
+                    <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                      v.isProduction ? "bg-success/8 border border-success/10" : "bg-secondary"
                     }`}>
                       {v.isProduction ? (
-                        <CheckCircle className="w-4 h-4 text-success" />
+                        <CheckCircle className="w-3 h-3 text-success" />
                       ) : (
-                        <Clock className="w-4 h-4 text-muted-foreground" />
+                        <Clock className="w-3 h-3 text-muted-foreground/40" />
                       )}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-foreground">Version {v.versionNumber}</span>
+                        <span className="font-medium text-xs text-foreground">Version {v.versionNumber}</span>
                         {v.isProduction && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-success/10 text-success font-medium">Production</span>
+                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-success/8 text-success border border-success/10 uppercase tracking-wider">Production</span>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground mt-0.5">{v.notes}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{new Date(v.createdAt).toLocaleString()}</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">{v.notes}</p>
+                      <p className="text-[9px] text-muted-foreground/30 mt-1 font-mono">{new Date(v.createdAt).toLocaleString()}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-1 flex-shrink-0">
                     {!v.isProduction && (
-                      <Button size="sm" variant="outline" className="text-xs border-border text-foreground">
-                        <Globe className="w-3 h-3 mr-1" /> Promote
+                      <Button size="sm" variant="ghost" className="text-[10px] text-muted-foreground/40 hover:text-foreground h-6 px-2">
+                        <Globe className="w-2.5 h-2.5 mr-1" /> Promote
                       </Button>
                     )}
-                    <Button size="sm" variant="ghost" className="text-xs text-muted-foreground">
-                      <RotateCcw className="w-3 h-3 mr-1" /> Restore
+                    <Button size="sm" variant="ghost" className="text-[10px] text-muted-foreground/30 hover:text-foreground h-6 px-2">
+                      <RotateCcw className="w-2.5 h-2.5 mr-1" /> Restore
                     </Button>
                   </div>
                 </div>
@@ -154,24 +150,26 @@ const InstructionDetail = () => {
 
         {/* Threads Tab */}
         {activeTab === "threads" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
             {linkedThreads.length === 0 ? (
-              <p className="text-muted-foreground text-sm py-8 text-center">No linked threads yet.</p>
+              <p className="text-muted-foreground/40 text-xs py-12 text-center">No linked threads.</p>
             ) : (
-              linkedThreads.map(th => (
-                <div key={th.id} className="glass rounded-xl p-5">
-                  <div className="flex items-start justify-between gap-4 mb-3">
-                    <div>
-                      <h3 className="font-medium text-foreground">{th.title}</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">{th.platform} · {th.model} · {new Date(th.createdAt).toLocaleDateString()}</p>
+              <div className="space-y-px rounded-lg overflow-hidden border border-border/20">
+                {linkedThreads.map(th => (
+                  <div key={th.id} className="bg-background hover:bg-card/20 transition-colors duration-500 p-4">
+                    <div className="flex items-start justify-between gap-4 mb-2">
+                      <div>
+                        <h3 className="font-medium text-xs text-foreground">{th.title}</h3>
+                        <p className="text-[10px] text-muted-foreground/40 mt-0.5 font-mono">{th.platform} · {th.model} · {new Date(th.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <Button size="sm" variant="ghost" onClick={() => copyContent(th.content)} className="text-muted-foreground/30 hover:text-foreground flex-shrink-0 h-6">
+                        <Copy className="w-3 h-3" />
+                      </Button>
                     </div>
-                    <Button size="sm" variant="ghost" onClick={() => copyContent(th.content)} className="text-muted-foreground hover:text-foreground flex-shrink-0">
-                      <Copy className="w-3.5 h-3.5" />
-                    </Button>
+                    <pre className="font-mono text-[10px] text-muted-foreground/40 whitespace-pre-wrap line-clamp-4 leading-relaxed">{th.content}</pre>
                   </div>
-                  <pre className="font-mono text-xs text-muted-foreground whitespace-pre-wrap line-clamp-6 leading-relaxed">{th.content}</pre>
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </motion.div>
         )}
