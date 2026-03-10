@@ -14,6 +14,77 @@ export type Database = {
   }
   public: {
     Tables: {
+      instruction_groups: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      instruction_versions: {
+        Row: {
+          content: string
+          created_at: string
+          group_id: string
+          id: string
+          is_production: boolean
+          notes: string | null
+          version_number: number
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          group_id: string
+          id?: string
+          is_production?: boolean
+          notes?: string | null
+          version_number?: number
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          group_id?: string
+          id?: string
+          is_production?: boolean
+          notes?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instruction_versions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "instruction_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -40,6 +111,82 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      thread_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          thread_id: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          thread_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          thread_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "thread_comments_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      threads: {
+        Row: {
+          cleaned_content: string
+          created_at: string
+          group_id: string | null
+          id: string
+          model: string | null
+          platform: string | null
+          raw_content: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          cleaned_content?: string
+          created_at?: string
+          group_id?: string | null
+          id?: string
+          model?: string | null
+          platform?: string | null
+          raw_content?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          cleaned_content?: string
+          created_at?: string
+          group_id?: string | null
+          id?: string
+          model?: string | null
+          platform?: string | null
+          raw_content?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "threads_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "instruction_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

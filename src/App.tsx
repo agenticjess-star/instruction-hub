@@ -11,7 +11,7 @@ import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
-import InstructionDetail from "./pages/InstructionDetail";
+import GroupDetail from "./pages/GroupDetail";
 import ThreadLibrary from "./pages/ThreadLibrary";
 import OptimizationWorkspace from "./pages/OptimizationWorkspace";
 import PublicEndpoint from "./pages/PublicEndpoint";
@@ -33,7 +33,8 @@ const App = () => (
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/instructions/:id" element={<ProtectedRoute><InstructionDetail /></ProtectedRoute>} />
+            <Route path="/groups/:id" element={<ProtectedRoute><GroupDetail /></ProtectedRoute>} />
+            <Route path="/instructions/:id" element={<ProtectedRoute><GroupDetail /></ProtectedRoute>} />
             <Route path="/threads" element={<ProtectedRoute><ThreadLibrary /></ProtectedRoute>} />
             <Route path="/optimize" element={<ProtectedRoute><OptimizationWorkspace /></ProtectedRoute>} />
             <Route path="/p/:slug" element={<PublicEndpoint />} />
