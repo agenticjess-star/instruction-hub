@@ -2,6 +2,17 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
+export interface Category {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string;
+  color: string;
+  icon: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface InstructionGroup {
   id: string;
   user_id: string;
@@ -9,6 +20,7 @@ export interface InstructionGroup {
   description: string;
   icon: string;
   color: string;
+  category_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -43,15 +55,73 @@ export interface ThreadComment {
   created_at: string;
 }
 
-export function useGroups() {
+// ── Categories ──
+
+export function useCategories() {
   const { user } = useAuth();
   return useQuery({
-    queryKey: ["instruction_groups"],
+    queryKey: ["categories"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("instruction_groups")
+        .from("categories")
         .select("*")
-        .order("updated_at", { ascending: false });
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as Category[];
+    },
+    enabled: !!user,
+  });
+}
+
+export function useCreateCategory() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (input: { name: string; description?: string; color?: string; icon?: string }) => {
+      const { data, error } = await supabase
+        .from("categories")
+        .insert({ ...input, user_id: user!.id })
+        .select()
+        .single();
+      if (error) throw error;
+      return data as Category;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["categories"] }),
+  });
+}
+
+export function useUpdateCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...input }: { id: string; name?: string; description?: string; color?: string; icon?: string }) => {
+      const { error } = await supabase.from("categories").update(input).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["categories"] }),
+  });
+}
+
+export function useDeleteCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("categories").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["categories"] }),
+  });
+}
+
+// ── Instruction Groups ──
+
+export function useGroups(categoryId?: string) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["instruction_groups", categoryId ?? "all"],
+    queryFn: async () => {
+      let query = supabase.from("instruction_groups").select("*").order("updated_at", { ascending: false });
+      if (categoryId) query = query.eq("category_id", categoryId);
+      const { data, error } = await query;
       if (error) throw error;
       return data as InstructionGroup[];
     },
@@ -76,6 +146,47 @@ export function useGroup(id: string | undefined) {
   });
 }
 
+export function useCreateGroup() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (input: { name: string; description: string; category_id?: string; color?: string }) => {
+      const { data, error } = await supabase
+        .from("instruction_groups")
+        .insert({ ...input, user_id: user!.id })
+        .select()
+        .single();
+      if (error) throw error;
+      return data as InstructionGroup;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["instruction_groups"] }),
+  });
+}
+
+export function useUpdateGroup() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...input }: { id: string; name?: string; description?: string; category_id?: string | null; color?: string }) => {
+      const { error } = await supabase.from("instruction_groups").update(input).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["instruction_groups"] }),
+  });
+}
+
+export function useDeleteGroup() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("instruction_groups").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["instruction_groups"] }),
+  });
+}
+
+// ── Versions ──
+
 export function useVersions(groupId: string | undefined) {
   const { user } = useAuth();
   return useQuery({
@@ -90,55 +201,6 @@ export function useVersions(groupId: string | undefined) {
       return data as InstructionVersion[];
     },
     enabled: !!user && !!groupId,
-  });
-}
-
-export function useThreads(groupId?: string) {
-  const { user } = useAuth();
-  return useQuery({
-    queryKey: ["threads", groupId ?? "all"],
-    queryFn: async () => {
-      let query = supabase.from("threads").select("*").order("created_at", { ascending: false });
-      if (groupId) query = query.eq("group_id", groupId);
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as Thread[];
-    },
-    enabled: !!user,
-  });
-}
-
-export function useThreadComments(threadId: string | undefined) {
-  const { user } = useAuth();
-  return useQuery({
-    queryKey: ["thread_comments", threadId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("thread_comments")
-        .select("*")
-        .eq("thread_id", threadId!)
-        .order("created_at", { ascending: true });
-      if (error) throw error;
-      return data as ThreadComment[];
-    },
-    enabled: !!user && !!threadId,
-  });
-}
-
-export function useCreateGroup() {
-  const qc = useQueryClient();
-  const { user } = useAuth();
-  return useMutation({
-    mutationFn: async (input: { name: string; description: string }) => {
-      const { data, error } = await supabase
-        .from("instruction_groups")
-        .insert({ ...input, user_id: user!.id })
-        .select()
-        .single();
-      if (error) throw error;
-      return data as InstructionGroup;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["instruction_groups"] }),
   });
 }
 
@@ -162,19 +224,41 @@ export function usePromoteVersion() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ versionId, groupId }: { versionId: string; groupId: string }) => {
-      // Unset all production flags for this group
-      await supabase
-        .from("instruction_versions")
-        .update({ is_production: false })
-        .eq("group_id", groupId);
-      // Set the target version
-      const { error } = await supabase
-        .from("instruction_versions")
-        .update({ is_production: true })
-        .eq("id", versionId);
+      await supabase.from("instruction_versions").update({ is_production: false }).eq("group_id", groupId);
+      const { error } = await supabase.from("instruction_versions").update({ is_production: true }).eq("id", versionId);
       if (error) throw error;
     },
     onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: ["instruction_versions", vars.groupId] }),
+  });
+}
+
+// ── Threads ──
+
+export function useThreads(groupId?: string) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["threads", groupId ?? "all"],
+    queryFn: async () => {
+      let query = supabase.from("threads").select("*").order("created_at", { ascending: false });
+      if (groupId) query = query.eq("group_id", groupId);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as Thread[];
+    },
+    enabled: !!user,
+  });
+}
+
+export function useThread(id: string | undefined) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["threads", "detail", id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("threads").select("*").eq("id", id!).single();
+      if (error) throw error;
+      return data as Thread;
+    },
+    enabled: !!user && !!id,
   });
 }
 
@@ -195,6 +279,47 @@ export function useCreateThread() {
   });
 }
 
+export function useUpdateThread() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...input }: { id: string; title?: string; raw_content?: string; cleaned_content?: string; group_id?: string | null; platform?: string; model?: string }) => {
+      const { error } = await supabase.from("threads").update(input).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["threads"] }),
+  });
+}
+
+export function useDeleteThread() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("threads").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["threads"] }),
+  });
+}
+
+// ── Comments ──
+
+export function useThreadComments(threadId: string | undefined) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["thread_comments", threadId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("thread_comments")
+        .select("*")
+        .eq("thread_id", threadId!)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as ThreadComment[];
+    },
+    enabled: !!user && !!threadId,
+  });
+}
+
 export function useCreateComment() {
   const qc = useQueryClient();
   const { user } = useAuth();
@@ -209,16 +334,5 @@ export function useCreateComment() {
       return data as ThreadComment;
     },
     onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: ["thread_comments", vars.thread_id] }),
-  });
-}
-
-export function useDeleteGroup() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("instruction_groups").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["instruction_groups"] }),
   });
 }
