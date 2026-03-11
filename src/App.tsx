@@ -11,6 +11,7 @@ import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
+import GroupsPage from "./pages/GroupsPage";
 import GroupDetail from "./pages/GroupDetail";
 import ThreadLibrary from "./pages/ThreadLibrary";
 import ThreadDetail from "./pages/ThreadDetail";
