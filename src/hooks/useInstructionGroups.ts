@@ -44,6 +44,7 @@ export interface Thread {
   cleaned_content: string;
   platform: string;
   model: string;
+  rating: string | null;
   created_at: string;
 }
 
@@ -282,8 +283,8 @@ export function useCreateThread() {
 export function useUpdateThread() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...input }: { id: string; title?: string; raw_content?: string; cleaned_content?: string; group_id?: string | null; platform?: string; model?: string }) => {
-      const { error } = await supabase.from("threads").update(input).eq("id", id);
+    mutationFn: async ({ id, ...input }: { id: string; title?: string; raw_content?: string; cleaned_content?: string; group_id?: string | null; platform?: string; model?: string; rating?: string | null }) => {
+      const { error } = await supabase.from("threads").update(input as any).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["threads"] }),

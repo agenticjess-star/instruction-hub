@@ -1,10 +1,11 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Layers, LayoutDashboard, MessageSquare, Sparkles, LogOut } from "lucide-react";
+import { Layers, LayoutDashboard, MessageSquare, Sparkles, LogOut, FolderOpen } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 
 const navItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/groups", icon: FolderOpen, label: "Groups" },
   { to: "/threads", icon: MessageSquare, label: "Threads" },
   { to: "/optimize", icon: Sparkles, label: "Optimize" },
 ];
@@ -34,7 +35,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             </Link>
             <div className="flex items-center gap-0.5">
               {navItems.map((item) => {
-                const active = location.pathname.startsWith(item.to);
+                const active = location.pathname === item.to || (item.to !== "/dashboard" && location.pathname.startsWith(item.to));
                 return (
                   <Link
                     key={item.to}

@@ -196,6 +196,7 @@ export type Database = {
           id: string
           model: string | null
           platform: string | null
+          rating: string | null
           raw_content: string
           title: string
           user_id: string
@@ -207,6 +208,7 @@ export type Database = {
           id?: string
           model?: string | null
           platform?: string | null
+          rating?: string | null
           raw_content?: string
           title: string
           user_id: string
@@ -218,6 +220,7 @@ export type Database = {
           id?: string
           model?: string | null
           platform?: string | null
+          rating?: string | null
           raw_content?: string
           title?: string
           user_id?: string

@@ -1,7 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Copy, Edit3, Save, X, Send, MessageSquare, User, Bot, Tag } from "lucide-react";
+import { ArrowLeft, Copy, Edit3, Save, X, Send, MessageSquare, User, Bot, Tag, SmilePlus, Meh, Frown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useThread, useUpdateThread, useThreadComments, useCreateComment, useGroups } from "@/hooks/useInstructionGroups";
 import AppLayout from "@/components/AppLayout";
@@ -40,6 +40,12 @@ function parseThreadToMessages(cleaned: string): ChatMessage[] {
 
   return messages;
 }
+
+const RATINGS = [
+  { value: "positive", icon: SmilePlus, label: "Good", activeColor: "text-success bg-success/10 border-success/30" },
+  { value: "neutral", icon: Meh, label: "Okay", activeColor: "text-warning bg-warning/10 border-warning/30" },
+  { value: "negative", icon: Frown, label: "Bad", activeColor: "text-destructive bg-destructive/10 border-destructive/30" },
+] as const;
 
 const ThreadDetail = () => {
   const { id } = useParams();
@@ -105,6 +111,16 @@ const ThreadDetail = () => {
     }
   };
 
+  const setRating = async (rating: string | null) => {
+    try {
+      const newRating = (thread as any).rating === rating ? null : rating;
+      await updateThread.mutateAsync({ id: thread.id, rating: newRating } as any);
+      toast.success(newRating ? "Rating saved" : "Rating cleared");
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
     try {
@@ -117,7 +133,7 @@ const ThreadDetail = () => {
 
   return (
     <AppLayout>
-      <div className="max-w-[800px] mx-auto px-5 py-8">
+      <div className="max-w-[800px] mx-auto px-5 py-10">
         <Link to="/threads" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/60 hover:text-foreground mb-6 transition-colors font-medium">
           <ArrowLeft className="w-3.5 h-3.5" /> Threads
         </Link>
@@ -133,23 +149,13 @@ const ThreadDetail = () => {
               <span className="text-border">·</span>
               <span>{new Date(thread.created_at).toLocaleDateString()}</span>
             </div>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2 mt-2.5 flex-wrap">
               {linkedGroup && (
-                <span
-                  className="text-[10px] px-2 py-0.5 rounded-md font-semibold border"
-                  style={{
-                    backgroundColor: `${linkedGroup.color}15`,
-                    borderColor: `${linkedGroup.color}30`,
-                    color: linkedGroup.color,
-                  }}
-                >
+                <span className="text-[10px] px-2 py-0.5 rounded-md font-semibold border" style={{ backgroundColor: `${linkedGroup.color}15`, borderColor: `${linkedGroup.color}30`, color: linkedGroup.color }}>
                   {linkedGroup.name}
                 </span>
               )}
-              <button
-                onClick={() => setShowTagPicker(!showTagPicker)}
-                className="text-[10px] px-2 py-0.5 rounded-md bg-secondary border border-border/40 text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all flex items-center gap-1"
-              >
+              <button onClick={() => setShowTagPicker(!showTagPicker)} className="text-[10px] px-2 py-0.5 rounded-md bg-secondary border border-border/40 text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all flex items-center gap-1">
                 <Tag className="w-2.5 h-2.5" />
                 {linkedGroup ? "Change" : "Link instruction"}
               </button>
@@ -172,23 +178,11 @@ const ThreadDetail = () => {
               <div className="card-elevated p-3">
                 <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-2">Link to instruction</p>
                 <div className="flex flex-wrap gap-1.5">
-                  <button
-                    onClick={() => assignGroup(null)}
-                    className={`text-[11px] px-2.5 py-1 rounded-md border transition-all ${!thread.group_id ? "bg-primary/10 border-primary/30 text-primary" : "bg-secondary border-border/40 text-muted-foreground hover:border-primary/20"}`}
-                  >
+                  <button onClick={() => assignGroup(null)} className={`text-[11px] px-2.5 py-1 rounded-md border transition-all ${!thread.group_id ? "bg-primary/10 border-primary/30 text-primary" : "bg-secondary border-border/40 text-muted-foreground hover:border-primary/20"}`}>
                     None
                   </button>
                   {groups.map(g => (
-                    <button
-                      key={g.id}
-                      onClick={() => assignGroup(g.id)}
-                      className="text-[11px] px-2.5 py-1 rounded-md border transition-all hover:scale-105"
-                      style={{
-                        backgroundColor: thread.group_id === g.id ? `${g.color}20` : undefined,
-                        borderColor: thread.group_id === g.id ? `${g.color}50` : undefined,
-                        color: g.color || undefined,
-                      }}
-                    >
+                    <button key={g.id} onClick={() => assignGroup(g.id)} className="text-[11px] px-2.5 py-1 rounded-md border transition-all hover:scale-105" style={{ backgroundColor: thread.group_id === g.id ? `${g.color}20` : undefined, borderColor: thread.group_id === g.id ? `${g.color}50` : undefined, color: g.color || undefined }}>
                       <span className="inline-block w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: g.color || "#666" }} />
                       {g.name}
                     </button>
@@ -198,6 +192,19 @@ const ThreadDetail = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Rating */}
+        <div className="flex items-center gap-2 mb-6">
+          <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mr-1">Rate:</span>
+          {RATINGS.map(r => {
+            const isActive = (thread as any).rating === r.value;
+            return (
+              <button key={r.value} onClick={() => setRating(r.value)} className={`flex items-center gap-1 px-2.5 py-1 rounded-md border text-[11px] font-medium transition-all ${isActive ? r.activeColor : "bg-secondary border-border/40 text-muted-foreground/60 hover:text-foreground hover:border-border"}`}>
+                <r.icon className="w-3.5 h-3.5" /> {r.label}
+              </button>
+            );
+          })}
+        </div>
 
         {/* Edit Mode */}
         <AnimatePresence>
@@ -229,25 +236,13 @@ const ThreadDetail = () => {
         {!editing && (
           <div className="space-y-3 mb-8">
             {messages.map((msg, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04 }}
-                className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-              >
+              <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }} className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 {msg.role === "assistant" && (
                   <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 mt-1">
                     <Bot className="w-3.5 h-3.5 text-primary/70" />
                   </div>
                 )}
-                <div
-                  className={`max-w-[80%] rounded-xl px-4 py-3 text-[13px] leading-relaxed ${
-                    msg.role === "user"
-                      ? "bg-primary/12 border border-primary/20 text-foreground"
-                      : "bg-secondary border border-border/40 text-foreground/85"
-                  }`}
-                >
+                <div className={`max-w-[80%] rounded-xl px-4 py-3 text-[13px] leading-relaxed ${msg.role === "user" ? "bg-primary/12 border border-primary/20 text-foreground" : "bg-secondary border border-border/40 text-foreground/85"}`}>
                   <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>
                 </div>
                 {msg.role === "user" && (
@@ -268,26 +263,14 @@ const ThreadDetail = () => {
           </h3>
           <div className="space-y-2 mb-4">
             {comments.map((c, i) => (
-              <motion.div
-                key={c.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: i * 0.03 }}
-                className="p-3 rounded-lg bg-secondary/50 border border-border/30"
-              >
+              <motion.div key={c.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} className="p-3 rounded-lg bg-secondary/50 border border-border/30">
                 <p className="text-xs text-foreground/80">{c.content}</p>
                 <p className="text-[9px] text-muted-foreground/40 mt-1.5 font-mono">{new Date(c.created_at).toLocaleString()}</p>
               </motion.div>
             ))}
           </div>
           <div className="flex gap-2">
-            <input
-              value={newComment}
-              onChange={e => setNewComment(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleAddComment()}
-              placeholder="Add a comment or learning note..."
-              className="flex-1 h-9 px-3.5 rounded-lg bg-secondary border border-border/40 text-xs text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 transition-all"
-            />
+            <input value={newComment} onChange={e => setNewComment(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAddComment()} placeholder="Add a comment or learning note..." className="flex-1 h-9 px-3.5 rounded-lg bg-secondary border border-border/40 text-xs text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 transition-all" />
             <Button size="sm" onClick={handleAddComment} disabled={createComment.isPending} className="h-9 px-3 bg-primary/10 text-primary hover:bg-primary/20 border border-primary/15">
               <Send className="w-3.5 h-3.5" />
             </Button>
