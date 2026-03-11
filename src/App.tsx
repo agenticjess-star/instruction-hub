@@ -35,6 +35,7 @@ const App = () => (
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/groups" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
             <Route path="/groups/:id" element={<ProtectedRoute><GroupDetail /></ProtectedRoute>} />
             <Route path="/instructions/:id" element={<ProtectedRoute><GroupDetail /></ProtectedRoute>} />
             <Route path="/threads" element={<ProtectedRoute><ThreadLibrary /></ProtectedRoute>} />
