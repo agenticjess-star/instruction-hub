@@ -44,6 +44,7 @@ export interface Thread {
   cleaned_content: string;
   platform: string;
   model: string;
+  rating: string | null;
   created_at: string;
 }
 
