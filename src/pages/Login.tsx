@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,12 +7,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import LogoAnimation from "@/components/LogoAnimation";
 
+// Only allow same-origin relative paths to prevent open redirects.
+function safeNext(raw: string | null): string {
+  if (!raw) return "/dashboard";
+  if (!raw.startsWith("/") || raw.startsWith("//")) return "/dashboard";
+  return raw;
+}
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [logoCollapsed, setLogoCollapsed] = useState(false);
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const next = safeNext(searchParams.get("next"));
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,13 +33,19 @@ const Login = () => {
       setLogoCollapsed(false);
       toast.error(error.message);
     } else {
-      setTimeout(() => navigate("/dashboard"), 600);
+      // Use window.location so OAuth consent (which is outside SPA state) fully hydrates.
+      setTimeout(() => {
+        if (next.startsWith("/.lovable/")) {
+          window.location.href = next;
+        } else {
+          navigate(next);
+        }
+      }, 600);
     }
   };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-5">
-      {/* Ambient glow */}
       <div className="fixed top-1/3 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-primary/3 rounded-full blur-[100px] pointer-events-none" />
 
       <motion.div
@@ -74,7 +89,13 @@ const Login = () => {
             Forgot password?
           </Link>
           <p className="text-xs text-muted-foreground/40">
-            No account? <Link to="/signup" className="text-primary/70 hover:text-primary transition-colors font-medium">Sign up</Link>
+            No account?{" "}
+            <Link
+              to={`/signup${next !== "/dashboard" ? `?next=${encodeURIComponent(next)}` : ""}`}
+              className="text-primary/70 hover:text-primary transition-colors font-medium"
+            >
+              Sign up
+            </Link>
           </p>
         </div>
       </motion.div>

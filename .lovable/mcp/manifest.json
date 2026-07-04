@@ -1,0 +1,215 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://avttfayhcbfrglyxybgp.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "instruction-os-mcp",
+      "version": "0.1.0",
+      "title": "Instruction OS"
+    },
+    "tools": [
+      {
+        "name": "list_groups",
+        "title": "List Groups",
+        "description": "List all top-level instruction groups (categories) belonging to the signed-in user.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_instructions",
+        "title": "List Instructions",
+        "description": "List instruction sets (formerly 'groups') for the signed-in user. Optionally filter by category (group).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "category_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Optional UUID of a top-level group to filter by."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_production_instruction",
+        "title": "Get Production Instruction",
+        "description": "Fetch the current production version of an instruction set. Returns the full instruction content ready to paste into an AI system prompt.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "instruction_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "UUID of the instruction set."
+            }
+          },
+          "required": [
+            "instruction_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_threads",
+        "title": "List Threads",
+        "description": "List conversation threads for the signed-in user. Filter by instruction_id or rating (positive/neutral/negative).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "instruction_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Optional instruction (group) UUID to filter by."
+            },
+            "rating": {
+              "type": "string",
+              "enum": [
+                "positive",
+                "neutral",
+                "negative"
+              ],
+              "description": "Optional rating filter."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Maximum threads to return (1-100)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_thread",
+        "title": "Save Thread",
+        "description": "Save a conversation thread. The raw content is auto-cleaned. Optionally link to an instruction set.",
+        "annotations": {
+          "readOnlyHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Short descriptive title."
+            },
+            "content": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Raw pasted thread content (will be auto-cleaned)."
+            },
+            "instruction_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Optional instruction (group) UUID to link this thread to."
+            },
+            "platform": {
+              "type": "string",
+              "maxLength": 50,
+              "description": "Platform name (e.g. ChatGPT, Claude, Cursor)."
+            },
+            "model": {
+              "type": "string",
+              "maxLength": 50,
+              "description": "Model name (e.g. gpt-5, claude-sonnet-4)."
+            },
+            "rating": {
+              "type": "string",
+              "enum": [
+                "positive",
+                "neutral",
+                "negative"
+              ],
+              "description": "Optional initial rating."
+            }
+          },
+          "required": [
+            "title",
+            "content"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "add_thread_comment",
+        "title": "Add Thread Comment",
+        "description": "Add a comment or learning note to an existing thread.",
+        "annotations": {
+          "readOnlyHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "thread_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "UUID of the thread."
+            },
+            "content": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000,
+              "description": "Comment text."
+            }
+          },
+          "required": [
+            "thread_id",
+            "content"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
