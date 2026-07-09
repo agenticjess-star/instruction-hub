@@ -135,6 +135,8 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          telegram_chat_id: number | null
+          telegram_link_code: string | null
           updated_at: string
           user_id: string
         }
@@ -143,6 +145,8 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          telegram_chat_id?: number | null
+          telegram_link_code?: string | null
           updated_at?: string
           user_id: string
         }
@@ -151,6 +155,8 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          telegram_chat_id?: number | null
+          telegram_link_code?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -198,6 +204,7 @@ export type Database = {
           platform: string | null
           rating: string | null
           raw_content: string
+          source: string
           title: string
           user_id: string
         }
@@ -210,6 +217,7 @@ export type Database = {
           platform?: string | null
           rating?: string | null
           raw_content?: string
+          source?: string
           title: string
           user_id: string
         }
@@ -222,6 +230,7 @@ export type Database = {
           platform?: string | null
           rating?: string | null
           raw_content?: string
+          source?: string
           title?: string
           user_id?: string
         }
