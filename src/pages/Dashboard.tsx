@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Clock, MessageSquare, Layers, FolderOpen, Sparkles, Plus, SmilePlus, Meh, Frown } from "lucide-react";
+import { ArrowRight, MessageSquare, Layers, FolderOpen, Sparkles, Plus, SmilePlus, Meh, Frown, Send, Copy, Check, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGroups, useCategories, useThreads } from "@/hooks/useInstructionGroups";
+import { useProfile, useGenerateTelegramLinkCode, useUnlinkTelegram } from "@/hooks/useProfile";
+import { useState } from "react";
+import { toast } from "sonner";
 import AppLayout from "@/components/AppLayout";
 
 const RATING_ICONS = { positive: SmilePlus, neutral: Meh, negative: Frown };
@@ -12,9 +15,20 @@ const Dashboard = () => {
   const { data: categories = [] } = useCategories();
   const { data: groups = [] } = useGroups();
   const { data: allThreads = [], isLoading } = useThreads();
+  const { data: profile } = useProfile();
+  const generateCode = useGenerateTelegramLinkCode();
+  const unlink = useUnlinkTelegram();
+  const [copied, setCopied] = useState(false);
 
   const recentThreads = allThreads.slice(0, 8);
   const recentGroups = groups.slice(0, 6);
+  const telegramLinked = !!profile?.telegram_chat_id;
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
 
   return (
     <AppLayout>
