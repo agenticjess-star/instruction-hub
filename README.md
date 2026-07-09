@@ -1,246 +1,144 @@
 # Instruction OS
 
-> The operating system for managing, versioning, and optimizing AI custom instructions.
+> The operating system for AI custom instructions — version-controlled, agent-callable, and Telegram-native.
 
-[![Built with Lovable](https://img.shields.io/badge/Built%20with-Lovable-00b4d8?style=flat-square)](https://lovable.dev)
-[![Powered by Supabase](https://img.shields.io/badge/Backend-Lovable%20Cloud-3ecf8e?style=flat-square)](https://lovable.dev)
-
----
-
-## Problem Statement
-
-AI power users — strategists, builders, consultants, creatives — maintain custom instructions across multiple AI platforms (ChatGPT, Claude, Gemini, etc.) for different use cases. These instructions evolve over time based on conversation outcomes, but the current workflow is fragmented:
-
-- **No version control** — Updates overwrite previous instructions with no history or rollback
-- **No thread linkage** — Conversations that reveal instruction gaps aren't systematically captured
-- **No optimization loop** — Learning from good/bad threads requires manual review and editing
-- **Copy-paste chaos** — Instructions live in scattered notes, documents, and platform settings
-
-Instruction OS solves this by providing a unified, version-controlled, AI-optimized system for managing custom instructions.
+[![Built with Lovable](https://img.shields.io/badge/Built%20with-Lovable-2DD4BF?style=flat-square)](https://lovable.dev)
+[![MCP](https://img.shields.io/badge/Model%20Context%20Protocol-2.1-06B6D4?style=flat-square)](https://modelcontextprotocol.io)
+[![Backend](https://img.shields.io/badge/Backend-Lovable%20Cloud-3ecf8e?style=flat-square)](https://lovable.dev)
 
 ---
 
-## Product Overview
+## What it does
 
-### Core Concept: Instruction Groups
+AI power users maintain custom instructions across ChatGPT, Claude, Cursor, Gemini — for different personas (Tech Lead, Art Director, Career Consultant). These instructions evolve based on real conversations, but the workflow today is broken: no versioning, no linkage back to threads, no optimization loop, copy-paste chaos.
 
-Users organize their AI instructions into **groups** — each representing a distinct use case or persona:
+**Instruction OS** is a single source of truth for your instructions with three ways to interact with it:
 
-| Group | Purpose |
-|-------|---------|
-| **General Personal** | Personal preferences and communication style |
-| **Tech Lead** | High-level architecture decisions and stack evaluation |
-| **Vibe Coder** | Low-code optimized prompts, no code snippets |
-| **Career Consultant** | Professional development and career strategy |
-| **Art Director** | Image prompt engineering and character consistency |
+1. **The App** — organize, version, promote, and iterate visually.
+2. **MCP Server** — expose your entire library to any agent (Claude, ChatGPT, Cursor, Codex) over OAuth.
+3. **Telegram Inbox** — send any chat URL or pasted thread to a bot; it auto-scrapes (Firecrawl), auto-classifies (Lovable AI), and auto-sorts into the right group.
 
-### The Flywheel
+---
+
+## The flywheel
 
 ```
-Create Group → Write Instructions → Copy to Platform → Use in Conversations
-     ↑                                                          ↓
-     ↑                                                    Paste Thread Back
-     ↑                                                          ↓
-     ↑                                                Auto-Clean & Format
-     ↑                                                          ↓
-Version Updated ← Auto-Apply ← AI Suggests ← Optimizer Analyzes Threads
+Groups → Instructions → Versions ────► System prompt in your AI
+   ▲                                              │
+   │                                              ▼
+Optimizer ◄─ Rated Threads ◄─ Telegram auto-sort ◄─ Real conversations
 ```
-
-1. **Create** instruction groups for each use case
-2. **Version** your instructions with full history and diff tracking
-3. **Copy** to any AI platform with one click
-4. **Paste** conversation threads back — auto-cleaned from web artifacts
-5. **Analyze** threads against instructions using AI optimization
-6. **Auto-apply** suggestions as new versioned instructions
-7. **Repeat** — the system continuously improves
 
 ---
 
-## Features
+## Core features
 
-### Instruction Groups & Version Control
-- Create unlimited instruction groups with descriptions
-- Full version history with notes and timestamps
-- One-click promote any version to "production"
-- Copy production instructions instantly
-- Restore or fork from any previous version
+### Hierarchy
+- **Groups** — top-level categories (Developing, Creative, Career) with color tokens
+- **Instructions** — specific personas belonging to a group
+- **Versions** — full history with notes, one-click promote-to-production
+- **Threads** — real conversations linked back to instructions, with 😊 / 😐 / 😞 ratings
 
-### Thread Library
-- Paste raw conversation threads — the system auto-cleans web artifacts
-- Automatic formatting: strips HTML, timestamps, button text, and other copy-paste noise
-- Link threads to specific instruction groups
-- Add comments/annotations to threads for context
-- Search across all threads by title, platform, or model
+### Telegram auto-ingest
+- Bind a chat with `/link CODE` from your Dashboard
+- Send a URL → Firecrawl extracts the transcript
+- Send raw text → auto-cleaned
+- Either way → Lovable AI titles + classifies into the right group + rates it
+- Threads are tagged with `source = 'telegram'` for audit
 
-### AI-Powered Optimization
-- Analyze linked threads against current instructions
-- AI identifies gaps, inconsistencies, and improvement opportunities
-- Priority-ranked suggestions (high/medium/low)
-- One-click auto-apply creates a new version with improvements
-- Powered by Lovable AI Gateway — no API keys required
+### MCP server (OAuth 2.1)
+Endpoint: `https://<project>.supabase.co/functions/v1/mcp`
 
-### Authentication & Security
-- Email + password authentication
-- Protected routes for all user content
-- Row-Level Security on all database tables
-- Users can only access their own data
-- Automatic profile creation on signup
+Tools:
+| Tool | Kind | Purpose |
+|------|------|---------|
+| `list_groups` | read | Enumerate categories |
+| `list_instructions` | read | Enumerate instruction sets |
+| `get_production_instruction` | read | Return the live prompt string |
+| `list_threads` | read | Filter by instruction / rating |
+| `create_thread` | write | Save + auto-clean a thread |
+| `add_thread_comment` | write | Append learning notes |
+
+Any MCP-compatible client (Claude Desktop, Cursor, ChatGPT Custom Connectors, Codex) can sign in with your Instruction OS account. Row-Level Security enforces per-user scoping.
+
+### AI Optimizer
+Analyze rated threads against the current instruction to surface gaps, and one-click apply improvements as a new version.
 
 ---
 
 ## Architecture
 
-### Tech Stack
+| Layer | Tech |
+|-------|------|
+| Frontend | React 18 + Vite + TypeScript |
+| Styling | Tailwind + semantic HSL tokens |
+| UI | shadcn/ui + Framer Motion |
+| State | TanStack Query |
+| Backend | Lovable Cloud (Postgres + Auth + Edge Functions) |
+| AI | Lovable AI Gateway (`google/gemini-2.5-flash` for classification) |
+| Web extraction | Firecrawl v2 |
+| Messaging | Telegram Bot API via Lovable connector gateway |
+| Agent protocol | Model Context Protocol 2.1 (`@lovable.dev/mcp-js`) |
 
-| Layer | Technology |
-|-------|-----------|
-| **Frontend** | React 18 + TypeScript + Vite |
-| **Styling** | Tailwind CSS + custom design system |
-| **Components** | shadcn/ui + Radix primitives |
-| **Animation** | Framer Motion |
-| **State** | TanStack React Query |
-| **Routing** | React Router v6 |
-| **Backend** | Lovable Cloud (Supabase) |
-| **Database** | PostgreSQL with RLS |
-| **Auth** | Supabase Auth |
-| **AI** | Lovable AI Gateway |
-| **Edge Functions** | Deno-based serverless functions |
+### Edge functions
+- **`mcp`** — auto-generated MCP server (OAuth 2.1, dynamic client registration)
+- **`telegram-webhook`** — receives Telegram updates, runs the auto-sort pipeline
+- **`optimize-instructions`** — AI-driven instruction improvement suggestions
 
-### Database Schema
-
-```
-instruction_groups
-├── id (uuid, PK)
-├── user_id (uuid, FK → auth.users)
-├── name (text)
-├── description (text)
-├── icon (text)
-├── color (text)
-├── created_at (timestamptz)
-└── updated_at (timestamptz)
-
-instruction_versions
-├── id (uuid, PK)
-├── group_id (uuid, FK → instruction_groups)
-├── version_number (integer)
-├── content (text)
-├── notes (text)
-├── is_production (boolean)
-└── created_at (timestamptz)
-
-threads
-├── id (uuid, PK)
-├── user_id (uuid, FK → auth.users)
-├── group_id (uuid, FK → instruction_groups, nullable)
-├── title (text)
-├── raw_content (text)
-├── cleaned_content (text)
-├── platform (text)
-├── model (text)
-└── created_at (timestamptz)
-
-thread_comments
-├── id (uuid, PK)
-├── thread_id (uuid, FK → threads)
-├── user_id (uuid, FK → auth.users)
-├── content (text)
-└── created_at (timestamptz)
-```
-
-### Security Model
-
-All tables use PostgreSQL Row-Level Security (RLS):
-- **instruction_groups**: Users can only CRUD their own groups
-- **instruction_versions**: Access controlled via group ownership
-- **threads**: Users can only CRUD their own threads
-- **thread_comments**: Users can CRUD own comments + view comments on own threads
-
-### Edge Functions
-
-**`optimize-instructions`** — Accepts instruction content and linked thread conversations. Uses the Lovable AI Gateway to analyze patterns, identify gaps, and return structured improvement suggestions with priority rankings.
+### Security
+- Row-Level Security on every user-scoped table
+- User roles isolated in `user_roles` (not on profiles)
+- MCP tokens are Supabase-issued and audience-scoped
+- Telegram bindings verified via one-time link code
 
 ---
 
-## Design System
-
-### Visual Identity
-- **Aesthetic**: Premium dark interface with cyan/teal accents
-- **Philosophy**: "Elegant enough that you know it's serious"
-- **Typography**: Plus Jakarta Sans (body) + Space Grotesk (display) + JetBrains Mono (code)
-- **Effects**: Glassmorphism, elevated card shadows, subtle glow effects
-- **Interactions**: Framer Motion hover lifts, fade-in animations, logo collapse on auth
-
-### Design Tokens (HSL)
-- Background: `228 22% 5%`
-- Card: `228 20% 8%`
-- Primary (Teal): `175 72% 48%`
-- Success: `160 74% 40%`
-- Borders: `228 14% 16%`
-- Surface hierarchy: 3 elevation levels
-
----
-
-## Strategic Decision Points
-
-### Why Groups Instead of Tags?
-Tags create flat, overlapping taxonomies. Groups create clear hierarchies that mirror how power users actually think about their instructions — by use case, not by keyword.
-
-### Why Auto-Clean Threads?
-The paste-in workflow is the lowest-friction way to capture conversations. Users will copy entire browser pages, which includes buttons, timestamps, and UI artifacts. Auto-cleaning removes this friction completely.
-
-### Why Version Control Over Editing?
-Editing overwrites history. Version control preserves the evolution of instructions, enables rollback, and creates a clear audit trail of what changed and why.
-
-### Why AI Optimization Over Manual Review?
-Manual review doesn't scale. When you have 5+ instruction groups with dozens of linked threads, AI analysis surfaces patterns humans miss — especially cross-group learnings.
-
----
-
-## Consumer Value Proposition
-
-**For AI power users who maintain custom instructions across multiple platforms**, Instruction OS provides a single, version-controlled system that automatically improves your instructions based on real conversation outcomes.
-
-**Unlike** scattered notes, platform-specific settings, or manual copy-paste workflows, Instruction OS creates a continuous improvement loop: use → capture → analyze → optimize → deploy.
-
-**The result**: Better AI conversations, less manual maintenance, and instructions that evolve with your needs.
-
----
-
-## Getting Started
+## Setup
 
 ### Prerequisites
-- Node.js 18+
-- npm or bun
+- A Lovable Cloud project (comes free with any Lovable app)
+- Firecrawl connection linked (`FIRECRAWL_API_KEY`)
+- Telegram Bot API connection linked (`TELEGRAM_API_KEY`) — grant your account access under Workspace → Connectors
 
-### Local Development
+### Telegram bot registration
+After deploying `telegram-webhook`, register the webhook via the connector gateway:
 
 ```bash
-git clone <YOUR_GIT_URL>
-cd <YOUR_PROJECT_NAME>
+curl -sS 'https://connector-gateway.lovable.dev/telegram/setWebhook' \
+  -H "Authorization: Bearer $LOVABLE_API_KEY" \
+  -H "X-Connection-Api-Key: $TELEGRAM_API_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "url": "https://<project>.supabase.co/functions/v1/telegram-webhook",
+    "allowed_updates": ["message", "edited_message"]
+  }'
+```
+
+### Local dev
+```bash
 npm install
 npm run dev
 ```
 
-### Deployment
+---
 
-Deploy via [Lovable](https://lovable.dev) → Share → Publish.
+## Design system
 
-Backend (database, auth, edge functions) deploys automatically.
-Frontend requires clicking "Update" in the publish dialog.
+- **Aesthetic**: deep-black surfaces (`228 22% 5%`), cyan/teal accent (`175 72% 48%`)
+- **Type**: Plus Jakarta Sans (body), Space Grotesk (display), JetBrains Mono (code)
+- **Motion**: framer-motion — subtle lifts on hover, staggered fade-ins on load
+- **Nav**: glow-on-active (no border outline), thin weights, generous vertical padding
 
 ---
 
 ## Roadmap
 
-- [ ] Cross-group learning recommendations
-- [ ] Diff viewer for version comparisons
-- [ ] Bulk import from popular AI platforms
-- [ ] Team workspaces with shared instruction libraries
-- [ ] Webhook triggers on version promotion
-- [ ] Public endpoint API for programmatic access
-- [ ] Mobile-optimized responsive design
-- [ ] Export instructions as structured JSON/YAML
+- [ ] Diff viewer between versions
+- [ ] Slack ingest parity with Telegram
+- [ ] Public read-only endpoints for shared instructions
+- [ ] Bulk import from ChatGPT / Claude exports
+- [ ] Team workspaces with role-based sharing
 
 ---
 
-*Built with [Lovable](https://lovable.dev) — the AI-powered web development platform.*
+*Built with [Lovable](https://lovable.dev).*
