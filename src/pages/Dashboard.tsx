@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Clock, MessageSquare, Layers, FolderOpen, Sparkles, Plus, SmilePlus, Meh, Frown } from "lucide-react";
+import { ArrowRight, MessageSquare, Layers, FolderOpen, Sparkles, Plus, SmilePlus, Meh, Frown, Send, Copy, Check, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGroups, useCategories, useThreads } from "@/hooks/useInstructionGroups";
+import { useProfile, useGenerateTelegramLinkCode, useUnlinkTelegram } from "@/hooks/useProfile";
+import { useState } from "react";
+import { toast } from "sonner";
 import AppLayout from "@/components/AppLayout";
 
 const RATING_ICONS = { positive: SmilePlus, neutral: Meh, negative: Frown };
@@ -12,9 +15,20 @@ const Dashboard = () => {
   const { data: categories = [] } = useCategories();
   const { data: groups = [] } = useGroups();
   const { data: allThreads = [], isLoading } = useThreads();
+  const { data: profile } = useProfile();
+  const generateCode = useGenerateTelegramLinkCode();
+  const unlink = useUnlinkTelegram();
+  const [copied, setCopied] = useState(false);
 
   const recentThreads = allThreads.slice(0, 8);
   const recentGroups = groups.slice(0, 6);
+  const telegramLinked = !!profile?.telegram_chat_id;
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
 
   return (
     <AppLayout>
@@ -150,6 +164,60 @@ const Dashboard = () => {
                 <Link to="/optimize" className="card-interactive p-3 flex items-center gap-2.5 block text-xs font-medium text-muted-foreground hover:text-foreground">
                   <Sparkles className="w-3.5 h-3.5 text-primary/50" /> Optimize Instructions
                 </Link>
+                <Link to="/agents" className="card-interactive p-3 flex items-center gap-2.5 block text-xs font-medium text-muted-foreground hover:text-foreground">
+                  <Bot className="w-3.5 h-3.5 text-primary/50" /> Agent / MCP Docs
+                </Link>
+              </div>
+            </div>
+
+            {/* Telegram Inbox */}
+            <div>
+              <h2 className="text-sm font-bold text-foreground tracking-tight mb-3 flex items-center gap-2">
+                <Send className="w-3.5 h-3.5 text-primary" /> Telegram Inbox
+              </h2>
+              <div className="card-elevated p-4">
+                {telegramLinked ? (
+                  <>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                      <p className="text-xs font-semibold text-success">Connected</p>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed mb-3">
+                      Send any chat URL or pasted thread to your bot — it's auto-sorted into the right group.
+                    </p>
+                    <Button size="sm" variant="ghost" onClick={() => unlink.mutate()} className="text-[11px] h-7 text-muted-foreground hover:text-destructive">
+                      Unlink
+                    </Button>
+                  </>
+                ) : profile?.telegram_link_code ? (
+                  <>
+                    <p className="text-[11px] text-muted-foreground mb-2">Send this to your bot:</p>
+                    <button
+                      onClick={() => handleCopy(`/link ${profile.telegram_link_code}`)}
+                      className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-secondary border border-primary/20 hover:border-primary/40 transition-all group"
+                    >
+                      <code className="text-xs font-mono text-primary">/link {profile.telegram_link_code}</code>
+                      {copied ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />}
+                    </button>
+                    <p className="text-[10px] text-muted-foreground/60 mt-2 leading-relaxed">
+                      Code expires when the chat binds or you regenerate.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed mb-3">
+                      Bind a Telegram chat to auto-ingest threads by URL or paste.
+                    </p>
+                    <Button
+                      size="sm"
+                      onClick={() => generateCode.mutate(undefined, { onSuccess: () => toast.success("Link code ready") })}
+                      disabled={generateCode.isPending}
+                      className="w-full h-8 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      <Send className="w-3 h-3 mr-1.5" /> Generate Link Code
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>

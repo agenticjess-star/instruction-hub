@@ -18,6 +18,7 @@ import ThreadDetail from "./pages/ThreadDetail";
 import OptimizationWorkspace from "./pages/OptimizationWorkspace";
 import PublicEndpoint from "./pages/PublicEndpoint";
 import OAuthConsent from "./pages/OAuthConsent";
+import AgentDocs from "./pages/AgentDocs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/threads" element={<ProtectedRoute><ThreadLibrary /></ProtectedRoute>} />
             <Route path="/threads/:id" element={<ProtectedRoute><ThreadDetail /></ProtectedRoute>} />
             <Route path="/optimize" element={<ProtectedRoute><OptimizationWorkspace /></ProtectedRoute>} />
+            <Route path="/agents" element={<ProtectedRoute><AgentDocs /></ProtectedRoute>} />
             <Route path="/p/:slug" element={<PublicEndpoint />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             <Route path="*" element={<NotFound />} />

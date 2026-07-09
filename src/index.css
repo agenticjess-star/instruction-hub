@@ -134,12 +134,19 @@
     transform: translateY(-1px);
   }
 
-  .nav-item {
-    @apply transition-all duration-200 ease-out;
+  .nav-link {
+    @apply transition-all duration-300 ease-out;
   }
 
-  .nav-item:hover {
-    @apply text-foreground;
-    text-shadow: 0 0 12px hsl(var(--primary) / 0.3);
+  .nav-link:hover {
+    text-shadow: 0 0 14px hsl(var(--primary) / 0.35);
+  }
+
+  .nav-link-active {
+    text-shadow: 0 0 16px hsl(var(--primary) / 0.55), 0 0 32px hsl(var(--primary) / 0.25);
+  }
+
+  .nav-link-active svg {
+    filter: drop-shadow(0 0 6px hsl(var(--primary) / 0.6));
   }
 }
