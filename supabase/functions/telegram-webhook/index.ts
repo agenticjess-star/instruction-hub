@@ -7,6 +7,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
 const TELEGRAM_API_KEY = Deno.env.get("TELEGRAM_API_KEY");
@@ -46,31 +47,34 @@ async function firecrawlScrape(url: string): Promise<string | null> {
 }
 
 async function classifyThread(content: string, groups: Array<{ id: string; name: string; description?: string }>) {
-  if (!LOVABLE_API_KEY) return { title: content.slice(0, 60), group_id: null, rating: null };
+  if (!GEMINI_API_KEY) return { title: content.slice(0, 60), group_id: null, rating: null };
   const groupList = groups.map(g => `- ${g.id}: ${g.name}${g.description ? ` — ${g.description}` : ""}`).join("\n") || "(none)";
   const prompt = `You are sorting an AI conversation thread into the correct instruction group.
 
 Available groups:
 ${groupList}
 
-Return STRICT JSON: {"title": string (<= 70 chars), "group_id": string|null (must be one of the ids above or null if nothing fits), "rating": "positive"|"neutral"|"negative"|null (based on how well the AI performed)}
+Return JSON: {"title": string (<= 70 chars), "group_id": string|null (must be one of the ids above or null if nothing fits), "rating": "positive"|"neutral"|"negative"|null (based on how well the AI performed)}
 
 Thread content:
 ${content.slice(0, 8000)}`;
 
   try {
-    const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" },
-      }),
-    });
-    if (!r.ok) { console.error("ai gw", r.status, await r.text()); return { title: content.slice(0, 60), group_id: null, rating: null }; }
+    const r = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: "application/json" },
+        }),
+      },
+    );
+    if (!r.ok) { console.error("gemini", r.status, await r.text()); return { title: content.slice(0, 60), group_id: null, rating: null }; }
     const d = await r.json();
-    const parsed = JSON.parse(d.choices?.[0]?.message?.content ?? "{}");
+    const text = d?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
+    const parsed = JSON.parse(text);
     return {
       title: (parsed.title || content.slice(0, 60)).toString().slice(0, 200),
       group_id: parsed.group_id && groups.some(g => g.id === parsed.group_id) ? parsed.group_id : null,
