@@ -20,8 +20,7 @@ For each suggestion, provide:
 - The reasoning based on thread analysis
 - Priority level (high, medium, low)
 
-Return your response as a JSON object with a "suggestions" array. Each item has fields: suggestion, reasoning, priority.
-Keep suggestions concise and actionable. Limit to 5 suggestions max.`;
+Return a JSON object with a "suggestions" array (max 5 items). Each item: suggestion, reasoning, priority.`;
 
     const userPrompt = `Instruction: "${instructionName}"
 
@@ -31,7 +30,7 @@ ${instructionContent}
 Linked Thread Analysis:
 ${threadContents.map((t: string, i: number) => `Thread ${i + 1}:\n${t}`).join("\n\n")}
 
-Analyze these threads for patterns, issues, and improvement opportunities. Return optimization suggestions.`;
+Analyze these threads for patterns, issues, and improvement opportunities.`;
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
@@ -79,11 +78,6 @@ Analyze these threads for patterns, issues, and improvement opportunities. Retur
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
     const parsed = JSON.parse(text);
     return new Response(JSON.stringify({ suggestions: parsed.suggestions ?? [] }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-    if (false) {
-
-    return new Response(JSON.stringify({ suggestions: [] }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
