@@ -14,10 +14,11 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
-        display: ["Space Grotesk", "Plus Jakarta Sans", "system-ui", "sans-serif"],
-        mono: ["JetBrains Mono", "monospace"],
+        sans: ["DM Sans", "Avenir Next", "Helvetica Neue", "system-ui", "sans-serif"],
+        display: ["DM Sans", "Avenir Next", "Helvetica Neue", "system-ui", "sans-serif"],
+        mono: ["Roboto Mono", "IBM Plex Mono", "monospace"],
       },
+
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
