@@ -98,9 +98,10 @@ const ThreadLibrary = () => {
                 </select>
               </div>
               <textarea value={raw} onChange={e => setRaw(e.target.value)} placeholder="Paste the entire thread here..." rows={6} className="w-full px-3.5 py-3 rounded-lg bg-secondary border border-border/40 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all resize-y font-mono" />
-              <Button onClick={handleAdd} disabled={createThread.isPending} className="h-9 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90">
-                {createThread.isPending ? "Saving..." : "Add & Clean Thread"}
+              <Button onClick={handleAdd} disabled={cleaning || createThread.isPending || !raw.trim()} className="h-9 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90">
+                {cleaning || createThread.isPending ? "Cleaning with AI..." : "Add & Clean Thread"}
               </Button>
+
             </div>
           </motion.div>
         )}
