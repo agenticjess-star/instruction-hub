@@ -53,8 +53,11 @@ export interface ThreadComment {
   thread_id: string;
   user_id: string;
   content: string;
+  message_index: number | null;
+  quote: string | null;
   created_at: string;
 }
+
 
 // ── Categories ──
 
