@@ -328,14 +328,15 @@ export function useCreateComment() {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (input: { thread_id: string; content: string }) => {
+    mutationFn: async (input: { thread_id: string; content: string; message_index?: number | null; quote?: string | null }) => {
       const { data, error } = await supabase
         .from("thread_comments")
-        .insert({ ...input, user_id: user!.id })
+        .insert({ ...input, user_id: user!.id } as any)
         .select()
         .single();
       if (error) throw error;
       return data as ThreadComment;
+
     },
     onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: ["thread_comments", vars.thread_id] }),
   });
