@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useThreads, useGroups, useCreateThread } from "@/hooks/useInstructionGroups";
 import AppLayout from "@/components/AppLayout";
 import { toast } from "sonner";
-import { cleanThreadContent } from "@/lib/cleanThread";
+import { aiCleanThread, parseMessages } from "@/lib/threadMessages";
 
 const ThreadLibrary = () => {
   const [search, setSearch] = useState("");
@@ -29,21 +29,31 @@ const ThreadLibrary = () => {
     return matchSearch && matchGroup;
   });
 
+  const [cleaning, setCleaning] = useState(false);
+
   const handleAdd = async () => {
-    if (!title.trim() || !raw.trim()) return;
+    if (!raw.trim()) return;
+    setCleaning(true);
     try {
+      const result = await aiCleanThread(raw);
       await createThread.mutateAsync({
-        title: title.trim(),
+        title: title.trim() || result.title || "Untitled thread",
         raw_content: raw,
-        cleaned_content: cleanThreadContent(raw),
+        cleaned_content: result.content,
         group_id: groupId || undefined,
         platform, model,
       });
       setTitle(""); setRaw(""); setPlatform(""); setModel(""); setGroupId("");
       setShowAdd(false);
-      toast.success("Thread added & cleaned");
+      toast.success(
+        result.usedAi
+          ? `Thread cleaned into ${result.messages.length} messages`
+          : "Thread added (AI unavailable — basic cleaning)"
+      );
     } catch (e: any) { toast.error(e.message); }
+    finally { setCleaning(false); }
   };
+
 
   return (
     <AppLayout>
@@ -78,7 +88,7 @@ const ThreadLibrary = () => {
               <button onClick={() => setShowAdd(false)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
             </div>
             <div className="space-y-3">
-              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Thread title" className="w-full h-10 px-3.5 rounded-lg bg-secondary border border-border/40 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all" />
+              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Thread title (optional — AI will suggest one)" className="w-full h-10 px-3.5 rounded-lg bg-secondary border border-border/40 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all" />
               <div className="grid grid-cols-3 gap-3">
                 <input value={platform} onChange={e => setPlatform(e.target.value)} placeholder="Platform" className="h-10 px-3.5 rounded-lg bg-secondary border border-border/40 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all" />
                 <input value={model} onChange={e => setModel(e.target.value)} placeholder="Model" className="h-10 px-3.5 rounded-lg bg-secondary border border-border/40 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all" />
@@ -88,9 +98,10 @@ const ThreadLibrary = () => {
                 </select>
               </div>
               <textarea value={raw} onChange={e => setRaw(e.target.value)} placeholder="Paste the entire thread here..." rows={6} className="w-full px-3.5 py-3 rounded-lg bg-secondary border border-border/40 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all resize-y font-mono" />
-              <Button onClick={handleAdd} disabled={createThread.isPending} className="h-9 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90">
-                {createThread.isPending ? "Saving..." : "Add & Clean Thread"}
+              <Button onClick={handleAdd} disabled={cleaning || createThread.isPending || !raw.trim()} className="h-9 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90">
+                {cleaning || createThread.isPending ? "Cleaning with AI..." : "Add & Clean Thread"}
               </Button>
+
             </div>
           </motion.div>
         )}
@@ -117,7 +128,7 @@ const ThreadLibrary = () => {
                       <Copy className="w-3.5 h-3.5" />
                     </Button>
                   </div>
-                  <pre className="font-mono text-[11px] text-muted-foreground/50 whitespace-pre-wrap line-clamp-2 leading-relaxed mb-2">{th.cleaned_content || th.raw_content}</pre>
+                  <pre className="font-mono text-[11px] text-muted-foreground/50 whitespace-pre-wrap line-clamp-2 leading-relaxed mb-2">{parseMessages(th.cleaned_content || th.raw_content).map(m => m.content).join(" ")}</pre>
                   {g && (
                     <span className="text-[10px] px-2 py-0.5 rounded-md font-semibold border" style={{ backgroundColor: `${g.color}15`, borderColor: `${g.color}30`, color: g.color }}>
                       {g.name}

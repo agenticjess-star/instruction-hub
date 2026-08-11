@@ -121,16 +121,20 @@ const GroupsPage = () => {
                         </div>
                       ) : (
                         <>
-                          <div className="flex items-center gap-3">
+                          <Link to={`/categories/${cat.id}`} className="flex items-center gap-3 min-w-0 group/head">
                             <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color || "#3b82f6" }} />
-                            <h2 className="text-sm font-bold text-foreground">{cat.name}</h2>
+                            <h2 className="text-sm font-bold text-foreground truncate group-hover/head:text-primary transition-colors">{cat.name}</h2>
                             <span className="text-[10px] text-muted-foreground/50 bg-secondary px-2 py-0.5 rounded-md">{catGroups.length} instructions</span>
-                          </div>
+                            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover/head:text-primary transition-colors" />
+                          </Link>
                           <div className="flex items-center gap-1">
-                            <button onClick={() => { setEditingId(cat.id); setEditName(cat.name); setEditColor(cat.color || "#3b82f6"); }} className="p-1.5 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-secondary transition-all">
+                            <Link to={`/categories/${cat.id}`} className="text-[10px] font-semibold px-2 py-1 text-primary hover:underline">
+                              Open
+                            </Link>
+                            <button onClick={() => { setEditingId(cat.id); setEditName(cat.name); setEditColor(cat.color || "#3b82f6"); }} className="p-1.5 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-secondary transition-all" aria-label="Rename group">
                               <Edit3 className="w-3.5 h-3.5" />
                             </button>
-                            <button onClick={() => handleDelete(cat.id)} className="p-1.5 rounded-md text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-all">
+                            <button onClick={() => handleDelete(cat.id)} className="p-1.5 rounded-md text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-all" aria-label="Delete group">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
@@ -138,11 +142,13 @@ const GroupsPage = () => {
                       )}
                     </div>
                     {catGroups.length === 0 ? (
-                      <p className="text-xs text-muted-foreground/40 pl-6">No instructions in this group yet.</p>
+                      <Link to={`/categories/${cat.id}`} className="text-xs text-primary hover:underline pl-6 inline-flex items-center gap-1">
+                        <Plus className="w-3 h-3" /> Add the first instruction
+                      </Link>
                     ) : (
                       <div className="space-y-1 pl-6">
                         {catGroups.map(g => (
-                          <Link key={g.id} to={`/groups/${g.id}`} className="flex items-center gap-2.5 p-2.5 rounded-lg hover:bg-secondary/80 transition-all group">
+                          <Link key={g.id} to={`/instructions/${g.id}`} className="flex items-center gap-2.5 p-2.5 rounded-lg hover:bg-secondary/80 transition-all group">
                             <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: g.color || "#666" }} />
                             <span className="text-xs font-medium text-foreground group-hover:text-primary transition-colors flex-1">{g.name}</span>
                             <ChevronRight className="w-3 h-3 text-muted-foreground/30 group-hover:text-primary/50 transition-colors" />
@@ -150,6 +156,7 @@ const GroupsPage = () => {
                         ))}
                       </div>
                     )}
+
                   </div>
                 </motion.div>
               );

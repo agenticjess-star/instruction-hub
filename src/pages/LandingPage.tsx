@@ -13,6 +13,8 @@ import {
   Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import FeedbackLoopDiagram from "@/components/FeedbackLoopDiagram";
+
 
 const systemMap = [
   {
@@ -204,6 +206,10 @@ const LandingPage = () => {
             </div>
           </div>
         </section>
+
+        <FeedbackLoopDiagram />
+
+
 
         {/* Surfaces */}
         <section id="surfaces" className="border-b border-foreground/80">

@@ -13,6 +13,8 @@ import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import GroupsPage from "./pages/GroupsPage";
 import GroupDetail from "./pages/GroupDetail";
+import CategoryDetail from "./pages/CategoryDetail";
+
 import ThreadLibrary from "./pages/ThreadLibrary";
 import ThreadDetail from "./pages/ThreadDetail";
 import OptimizationWorkspace from "./pages/OptimizationWorkspace";
@@ -38,7 +40,9 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/groups" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
+            <Route path="/categories/:id" element={<ProtectedRoute><CategoryDetail /></ProtectedRoute>} />
             <Route path="/groups/:id" element={<ProtectedRoute><GroupDetail /></ProtectedRoute>} />
+
             <Route path="/instructions/:id" element={<ProtectedRoute><GroupDetail /></ProtectedRoute>} />
             <Route path="/threads" element={<ProtectedRoute><ThreadLibrary /></ProtectedRoute>} />
             <Route path="/threads/:id" element={<ProtectedRoute><ThreadDetail /></ProtectedRoute>} />
