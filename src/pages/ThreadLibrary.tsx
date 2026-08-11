@@ -29,21 +29,31 @@ const ThreadLibrary = () => {
     return matchSearch && matchGroup;
   });
 
+  const [cleaning, setCleaning] = useState(false);
+
   const handleAdd = async () => {
-    if (!title.trim() || !raw.trim()) return;
+    if (!raw.trim()) return;
+    setCleaning(true);
     try {
+      const result = await aiCleanThread(raw);
       await createThread.mutateAsync({
-        title: title.trim(),
+        title: title.trim() || result.title || "Untitled thread",
         raw_content: raw,
-        cleaned_content: cleanThreadContent(raw),
+        cleaned_content: result.content,
         group_id: groupId || undefined,
         platform, model,
       });
       setTitle(""); setRaw(""); setPlatform(""); setModel(""); setGroupId("");
       setShowAdd(false);
-      toast.success("Thread added & cleaned");
+      toast.success(
+        result.usedAi
+          ? `Thread cleaned into ${result.messages.length} messages`
+          : "Thread added (AI unavailable — basic cleaning)"
+      );
     } catch (e: any) { toast.error(e.message); }
+    finally { setCleaning(false); }
   };
+
 
   return (
     <AppLayout>
