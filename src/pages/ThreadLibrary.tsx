@@ -128,7 +128,7 @@ const ThreadLibrary = () => {
                       <Copy className="w-3.5 h-3.5" />
                     </Button>
                   </div>
-                  <pre className="font-mono text-[11px] text-muted-foreground/50 whitespace-pre-wrap line-clamp-2 leading-relaxed mb-2">{th.cleaned_content || th.raw_content}</pre>
+                  <pre className="font-mono text-[11px] text-muted-foreground/50 whitespace-pre-wrap line-clamp-2 leading-relaxed mb-2">{parseMessages(th.cleaned_content || th.raw_content).map(m => m.content).join(" ")}</pre>
                   {g && (
                     <span className="text-[10px] px-2 py-0.5 rounded-md font-semibold border" style={{ backgroundColor: `${g.color}15`, borderColor: `${g.color}30`, color: g.color }}>
                       {g.name}
