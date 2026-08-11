@@ -88,7 +88,7 @@ const ThreadLibrary = () => {
               <button onClick={() => setShowAdd(false)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
             </div>
             <div className="space-y-3">
-              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Thread title" className="w-full h-10 px-3.5 rounded-lg bg-secondary border border-border/40 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all" />
+              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Thread title (optional — AI will suggest one)" className="w-full h-10 px-3.5 rounded-lg bg-secondary border border-border/40 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all" />
               <div className="grid grid-cols-3 gap-3">
                 <input value={platform} onChange={e => setPlatform(e.target.value)} placeholder="Platform" className="h-10 px-3.5 rounded-lg bg-secondary border border-border/40 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all" />
                 <input value={model} onChange={e => setModel(e.target.value)} placeholder="Model" className="h-10 px-3.5 rounded-lg bg-secondary border border-border/40 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all" />
