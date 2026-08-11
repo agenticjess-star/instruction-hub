@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useThreads, useGroups, useCreateThread } from "@/hooks/useInstructionGroups";
 import AppLayout from "@/components/AppLayout";
 import { toast } from "sonner";
-import { cleanThreadContent } from "@/lib/cleanThread";
+import { aiCleanThread, parseMessages } from "@/lib/threadMessages";
 
 const ThreadLibrary = () => {
   const [search, setSearch] = useState("");
