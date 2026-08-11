@@ -205,6 +205,10 @@ const LandingPage = () => {
           </div>
         </section>
 
+        <FeedbackLoopDiagram />
+
+
+
         {/* Surfaces */}
         <section id="surfaces" className="border-b border-foreground/80">
           <div className="max-w-[1600px] mx-auto grid md:grid-cols-3">
