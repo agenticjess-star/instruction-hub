@@ -3,42 +3,40 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { client } from "@/integrations/neon/client";
 import { toast } from "sonner";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isRecovery, setIsRecovery] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash.includes("type=recovery")) {
-      setIsRecovery(true);
-    }
-    
-    supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
-        setIsRecovery(true);
-      }
-    });
+    // Better Auth emails a reset link carrying ?token=<token>
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get("token");
+    if (t) setToken(t);
   }, []);
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!token) return;
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password });
+    const { error } = await client.auth.resetPassword({
+      newPassword: password,
+      token,
+    });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      toast.error(error.message ?? "Couldn't reset password");
     } else {
       toast.success("Password updated successfully");
-      navigate("/dashboard");
+      navigate("/login");
     }
   };
 
-  if (!isRecovery) {
+  if (!token) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-5">
         <div className="text-center">

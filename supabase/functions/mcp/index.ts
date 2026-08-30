@@ -2,11 +2,14 @@
 // To take ownership, delete this banner line; the plugin then leaves the file alone.
 // supabase function: mcp
 // Bundled from src/lib/mcp/index.ts by @lovable.dev/mcp-js.
+// <define:import.meta.env>
+var define_import_meta_env_default = { VITE_NEON_AUTH_URL: "https://ep-cold-hall-aw8106c0.neonauth.c-12.us-east-1.aws.neon.tech/neondb/auth", VITE_NEON_DATA_API_URL: "https://ep-cold-hall-aw8106c0.apirest.c-12.us-east-1.aws.neon.tech/neondb/rest/v1", MODE: "production", BASE_URL: "/", DEV: false, PROD: true, SSR: false };
+
 // src/lib/mcp/index.ts
 import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
 
 // src/lib/mcp/tools/list-groups.ts
-import { createClient } from "npm:@supabase/supabase-js@^2.98.0";
+import { createClient } from "npm:@supabase/supabase-js";
 import { defineTool } from "npm:@lovable.dev/mcp-js@0.20.0";
 function supabaseForUser(ctx) {
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
@@ -32,9 +35,9 @@ var list_groups_default = defineTool({
 });
 
 // src/lib/mcp/tools/list-instructions.ts
-import { createClient as createClient2 } from "npm:@supabase/supabase-js@^2.98.0";
+import { createClient as createClient2 } from "npm:@supabase/supabase-js";
 import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { z } from "npm:zod@^3.25.76";
+import { z } from "npm:zod@^4.5.4";
 function supabaseForUser2(ctx) {
   return createClient2(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
@@ -63,9 +66,9 @@ var list_instructions_default = defineTool2({
 });
 
 // src/lib/mcp/tools/get-production-instruction.ts
-import { createClient as createClient3 } from "npm:@supabase/supabase-js@^2.98.0";
+import { createClient as createClient3 } from "npm:@supabase/supabase-js";
 import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { z as z2 } from "npm:zod@^3.25.76";
+import { z as z2 } from "npm:zod@^4.5.4";
 function supabaseForUser3(ctx) {
   return createClient3(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
@@ -105,9 +108,9 @@ ${version.content}` }
 });
 
 // src/lib/mcp/tools/list-threads.ts
-import { createClient as createClient4 } from "npm:@supabase/supabase-js@^2.98.0";
+import { createClient as createClient4 } from "npm:@supabase/supabase-js";
 import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { z as z3 } from "npm:zod@^3.25.76";
+import { z as z3 } from "npm:zod@^4.5.4";
 function supabaseForUser4(ctx) {
   return createClient4(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
@@ -139,9 +142,9 @@ var list_threads_default = defineTool4({
 });
 
 // src/lib/mcp/tools/create-thread.ts
-import { createClient as createClient5 } from "npm:@supabase/supabase-js@^2.98.0";
+import { createClient as createClient5 } from "npm:@supabase/supabase-js";
 import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { z as z4 } from "npm:zod@^3.25.76";
+import { z as z4 } from "npm:zod@^4.5.4";
 function supabaseForUser5(ctx) {
   return createClient5(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
@@ -187,9 +190,9 @@ var create_thread_default = defineTool5({
 });
 
 // src/lib/mcp/tools/add-thread-comment.ts
-import { createClient as createClient6 } from "npm:@supabase/supabase-js@^2.98.0";
+import { createClient as createClient6 } from "npm:@supabase/supabase-js";
 import { defineTool as defineTool6 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { z as z5 } from "npm:zod@^3.25.76";
+import { z as z5 } from "npm:zod@^4.5.4";
 function supabaseForUser6(ctx) {
   return createClient6(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
@@ -217,7 +220,7 @@ var add_thread_comment_default = defineTool6({
 });
 
 // src/lib/mcp/index.ts
-var projectRef = "avttfayhcbfrglyxybgp";
+var projectRef = define_import_meta_env_default.VITE_SUPABASE_PROJECT_ID ?? "project-ref-unset";
 var mcp_default = defineMcp({
   name: "instruction-os-mcp",
   title: "Instruction OS",

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { client } from "@/integrations/neon/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 export interface Profile {
@@ -14,7 +14,7 @@ export function useProfile() {
   return useQuery({
     queryKey: ["profile", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await client
         .from("profiles")
         .select("user_id, display_name, telegram_chat_id, telegram_link_code")
         .eq("user_id", user!.id)
@@ -39,7 +39,7 @@ export function useGenerateTelegramLinkCode() {
   return useMutation({
     mutationFn: async () => {
       const code = randomCode();
-      const { error } = await supabase
+      const { error } = await client
         .from("profiles")
         .update({ telegram_link_code: code, telegram_chat_id: null })
         .eq("user_id", user!.id);
@@ -55,7 +55,7 @@ export function useUnlinkTelegram() {
   const { user } = useAuth();
   return useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
+      const { error } = await client
         .from("profiles")
         .update({ telegram_chat_id: null, telegram_link_code: null })
         .eq("user_id", user!.id);

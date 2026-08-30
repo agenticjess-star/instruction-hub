@@ -3,7 +3,7 @@ import { Bot, Terminal, Copy, Check, MessageSquare, Zap, Shield, ExternalLink } 
 import AppLayout from "@/components/AppLayout";
 import { motion } from "framer-motion";
 
-const MCP_URL = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "your-project"}.supabase.co/functions/v1/mcp`;
+const MCP_URL = import.meta.env.VITE_MCP_URL ?? `${window.location.origin}/api/mcp`;
 
 const TOOLS = [
   { name: "list_groups", desc: "Enumerate top-level categories.", type: "read" },

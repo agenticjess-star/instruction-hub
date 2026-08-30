@@ -4,7 +4,7 @@ import { Sparkles, CheckCircle, Loader2, AlertCircle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGroups, useVersions, useThreads, useCreateVersion } from "@/hooks/useInstructionGroups";
 import AppLayout from "@/components/AppLayout";
-import { supabase } from "@/integrations/supabase/client";
+import { client } from "@/integrations/neon/client";
 import { toast } from "sonner";
 
 type Suggestion = {
@@ -37,8 +37,8 @@ const OptimizationWorkspace = () => {
     try {
       // Fetch versions and threads for this group
       const [versionsRes, threadsRes] = await Promise.all([
-        supabase.from("instruction_versions").select("*").eq("group_id", groupId).order("version_number", { ascending: false }).limit(1),
-        supabase.from("threads").select("*").eq("group_id", groupId),
+        client.from("instruction_versions").select("*").eq("group_id", groupId).order("version_number", { ascending: false }).limit(1),
+        client.from("threads").select("*").eq("group_id", groupId),
       ]);
 
       const latestVersion = versionsRes.data?.[0];
@@ -50,15 +50,18 @@ const OptimizationWorkspace = () => {
       }
 
       const group = groups.find(g => g.id === groupId);
-      const { data, error } = await supabase.functions.invoke("optimize-instructions", {
-        body: {
+      const base = import.meta.env.VITE_FUNCTIONS_URL ?? "";
+      const res = await fetch(`${base}/api/optimize-instructions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           instructionName: group?.name ?? "Unknown",
           instructionContent: latestVersion.content,
           threadContents: threads.map((t: any) => t.cleaned_content || t.raw_content),
-        },
+        }),
       });
-
-      if (error) throw error;
+      if (!res.ok) throw new Error(`optimize-instructions ${res.status}`);
+      const data = await res.json();
 
       setInsights(prev => ({ ...prev, [groupId]: { groupId, suggestions: data.suggestions ?? [], loading: false } }));
     } catch (e: any) {
@@ -72,7 +75,7 @@ const OptimizationWorkspace = () => {
     if (!insight || insight.suggestions.length === 0) return;
 
     try {
-      const versionsRes = await supabase.from("instruction_versions").select("*").eq("group_id", groupId).order("version_number", { ascending: false }).limit(1);
+      const versionsRes = await client.from("instruction_versions").select("*").eq("group_id", groupId).order("version_number", { ascending: false }).limit(1);
       const latest = versionsRes.data?.[0];
       if (!latest) return;
 
@@ -80,7 +83,7 @@ const OptimizationWorkspace = () => {
       const suggestionsText = insight.suggestions.map(s => `- ${s.suggestion}`).join("\n");
       const enhanced = `${latest.content}\n\n--- Applied Optimizations ---\n${suggestionsText}`;
 
-      await supabase.from("instruction_versions").insert({
+      await client.from("instruction_versions").insert({
         group_id: groupId,
         content: enhanced,
         notes: `Auto-optimized: ${insight.suggestions.length} suggestions applied`,

@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { client } from "@/integrations/neon/client";
 import { toast } from "sonner";
 import LogoAnimation from "@/components/LogoAnimation";
 
@@ -27,7 +27,7 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     setLogoCollapsed(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await client.auth.signInWithPassword({ email, password });
     if (error) {
       setLoading(false);
       setLogoCollapsed(false);

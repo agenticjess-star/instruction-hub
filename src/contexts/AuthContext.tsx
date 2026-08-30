@@ -1,10 +1,22 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { client } from "@/integrations/neon/client";
+
+// Structural session/user types compatible with the Supabase-shaped adapter
+// returned by @neondatabase/neon-js (SupabaseAuthAdapter).
+export interface AuthUser {
+  id: string;
+  email?: string;
+  [key: string]: unknown;
+}
+
+export interface AuthSession {
+  user: AuthUser;
+  [key: string]: unknown;
+}
 
 type AuthContextType = {
-  session: Session | null;
-  user: User | null;
+  session: AuthSession | null;
+  user: AuthUser | null;
   loading: boolean;
   signOut: () => Promise<void>;
 };
@@ -19,20 +31,20 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<AuthSession | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    const { data: { subscription } } = client.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession as AuthSession | null);
+      setUser((nextSession?.user as AuthUser) ?? null);
       setLoading(false);
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    client.auth.getSession().then(({ data: { session: current } }) => {
+      setSession(current as AuthSession | null);
+      setUser((current?.user as AuthUser) ?? null);
       setLoading(false);
     });
 
@@ -40,7 +52,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await client.auth.signOut();
   };
 
   return (
