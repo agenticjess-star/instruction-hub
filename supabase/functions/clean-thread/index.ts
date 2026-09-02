@@ -1,10 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { callGemini, resolveGeminiKey } from "../_shared/gemini.ts";
 
 const systemPrompt = `You are a transcript normalizer for AI conversation logs.
 
@@ -19,62 +14,50 @@ Your job:
 
 Return JSON: { "title": string, "messages": [{ "role": "user" | "assistant", "content": string }] }`;
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const { raw } = await req.json();
-    if (typeof raw !== "string" || !raw.trim()) {
-      return new Response(JSON.stringify({ error: "raw text is required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (typeof raw !== "string" || !raw.trim()) return json({ error: "raw text is required" }, 400);
 
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
+    const apiKey = await resolveGeminiKey(req);
+    if (!apiKey) return json({ error: "No Gemini API key. Add one in Settings." }, 400);
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemPrompt }] },
-          contents: [{ role: "user", parts: [{ text: raw.slice(0, 200000) }] }],
-          generationConfig: {
-            temperature: 0,
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: "OBJECT",
-              properties: {
-                title: { type: "STRING" },
-                messages: {
-                  type: "ARRAY",
-                  items: {
-                    type: "OBJECT",
-                    properties: {
-                      role: { type: "STRING", enum: ["user", "assistant"] },
-                      content: { type: "STRING" },
-                    },
-                    required: ["role", "content"],
-                  },
+    const response = await callGemini(apiKey, {
+      systemInstruction: { parts: [{ text: systemPrompt }] },
+      contents: [{ role: "user", parts: [{ text: raw.slice(0, 200000) }] }],
+      generationConfig: {
+        temperature: 0,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "OBJECT",
+          properties: {
+            title: { type: "STRING" },
+            messages: {
+              type: "ARRAY",
+              items: {
+                type: "OBJECT",
+                properties: {
+                  role: { type: "STRING", enum: ["user", "assistant"] },
+                  content: { type: "STRING" },
                 },
+                required: ["role", "content"],
               },
-              required: ["title", "messages"],
             },
           },
-        }),
+          required: ["title", "messages"],
+        },
       },
-    );
+    });
 
     if (!response.ok) {
       const details = await response.text();
       console.error("Gemini error:", response.status, details);
-      return new Response(JSON.stringify({ error: "Gemini error", status: response.status, details }), {
-        status: response.status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Gemini error", status: response.status, details }, response.status);
     }
 
     const data = await response.json();
@@ -82,15 +65,9 @@ serve(async (req) => {
     const parsed = JSON.parse(text);
     const messages = Array.isArray(parsed.messages) ? parsed.messages : [];
 
-    return new Response(
-      JSON.stringify({ title: parsed.title ?? "", messages }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return json({ title: parsed.title ?? "", messages });
   } catch (e) {
     console.error("clean-thread error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: e instanceof Error ? e.message : "Unknown error" }, 500);
   }
 });

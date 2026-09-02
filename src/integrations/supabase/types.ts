@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_events: {
+        Row: {
+          created_at: string
+          detail: string
+          group_id: string | null
+          id: string
+          kind: string
+          read_at: string | null
+          source: string
+          thread_id: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          detail?: string
+          group_id?: string | null
+          id?: string
+          kind: string
+          read_at?: string | null
+          source?: string
+          thread_id?: string | null
+          title?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          detail?: string
+          group_id?: string | null
+          id?: string
+          kind?: string
+          read_at?: string | null
+          source?: string
+          thread_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_events_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "instruction_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_events_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           color: string | null
@@ -135,8 +189,6 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
-          telegram_chat_id: number | null
-          telegram_link_code: string | null
           updated_at: string
           user_id: string
         }
@@ -145,8 +197,6 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
-          telegram_chat_id?: number | null
-          telegram_link_code?: string | null
           updated_at?: string
           user_id: string
         }
@@ -155,8 +205,6 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
-          telegram_chat_id?: number | null
-          telegram_link_code?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -249,6 +297,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_settings: {
+        Row: {
+          created_at: string
+          gemini_api_key: string | null
+          supabase_project_url: string | null
+          telegram_bot_token: string | null
+          telegram_bot_username: string | null
+          telegram_chat_id: number | null
+          telegram_linked_at: string | null
+          telegram_webhook_secret: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          gemini_api_key?: string | null
+          supabase_project_url?: string | null
+          telegram_bot_token?: string | null
+          telegram_bot_username?: string | null
+          telegram_chat_id?: number | null
+          telegram_linked_at?: string | null
+          telegram_webhook_secret?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          gemini_api_key?: string | null
+          supabase_project_url?: string | null
+          telegram_bot_token?: string | null
+          telegram_bot_username?: string | null
+          telegram_chat_id?: number | null
+          telegram_linked_at?: string | null
+          telegram_webhook_secret?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
