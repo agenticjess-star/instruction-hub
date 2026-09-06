@@ -1,7 +1,7 @@
 // Instruction OS MCP tools, ported from the Supabase edge-function handlers to
 // run against the Neon Data API. Each receives the caller's access token so the
 // Data API enforces Row-Level Security per user.
-import { db } from "./dataApi";
+import { db } from "./dataApi.js";
 
 type Token = string | undefined;
 

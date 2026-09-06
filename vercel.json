@@ -2,6 +2,7 @@
   "rewrites": [
     { "source": "/api/auth/(.*)", "destination": "/api/auth" },
     { "source": "/oauth2/(.*)", "destination": "/api/auth" },
-    { "source": "/.well-known/(oauth.*|openid.*)", "destination": "/api/auth" }
+    { "source": "/.well-known/(oauth.*|openid.*)", "destination": "/api/auth" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

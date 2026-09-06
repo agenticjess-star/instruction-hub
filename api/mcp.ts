@@ -2,9 +2,8 @@
 // Auth: OAuth 2.1 via the self-hosted Better Auth service (api/_lib/auth.ts).
 // The @better-auth/mcp plugin serves the protected-resource metadata and OAuth
 // endpoints; this route validates the bearer token and dispatches tool calls.
-import { verifyAccessTokenRequest } from "better-auth/oauth2";
-import { auth } from "./_lib/auth";
-import * as tools from "./_lib/tools";
+import { requestToResourceInput, verifyAccessTokenRequest } from "better-auth/oauth2";
+import * as tools from "./_lib/tools.js";
 
 const RESOURCE = process.env.MCP_RESOURCE_URL!;
 
@@ -49,7 +48,13 @@ export default async function handler(req: Request) {
 
   // Verify the bearer token against our Better Auth issuer (signature, iss,
   // audience=resource, expiry). 401 + WWW-Authenticate kicks off the OAuth flow.
-  const verification = await verifyAccessTokenRequest(auth, req, { resource: RESOURCE }).catch(() => null);
+  const verification = await verifyAccessTokenRequest(requestToResourceInput(req), {
+    verifyOptions: {
+      issuer: process.env.BETTER_AUTH_URL!,
+      audience: RESOURCE,
+    },
+    jwksUrl: `${process.env.BETTER_AUTH_URL!}/jwks`,
+  }).catch(() => null);
   if (!verification) {
     return new Response("Unauthorized", {
       status: 401,
