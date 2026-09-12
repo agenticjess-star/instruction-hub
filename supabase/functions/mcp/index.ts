@@ -6,14 +6,58 @@
 import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.20.1";
 
 // src/lib/mcp/tools/list-groups.ts
-import { createClient } from "npm:@supabase/supabase-js@^2.98.0";
 import { defineTool } from "npm:@lovable.dev/mcp-js@0.20.1";
+
+// src/lib/mcp/supabase.ts
+import { createClient } from "npm:@supabase/supabase-js@^2.98.0";
+function runtimeEnv(name) {
+  const runtime = globalThis;
+  return runtime.Deno?.env?.get?.(name) ?? runtime.process?.env?.[name];
+}
+function configuredEnv(names) {
+  for (const name of names) {
+    const value = runtimeEnv(name)?.trim();
+    if (value) return value;
+  }
+  return void 0;
+}
+function supabaseProjectUrl() {
+  const url = configuredEnv(["SUPABASE_URL", "VITE_SUPABASE_URL"]);
+  if (!url) throw new Error("SUPABASE_URL (or VITE_SUPABASE_URL) is required");
+  return url;
+}
+function supabasePublishableKey() {
+  const direct = configuredEnv([
+    "SUPABASE_PUBLISHABLE_KEY",
+    "VITE_SUPABASE_PUBLISHABLE_KEY"
+  ]);
+  if (direct) return direct;
+  const keyset = runtimeEnv("SUPABASE_PUBLISHABLE_KEYS");
+  if (keyset) {
+    try {
+      const parsed = JSON.parse(keyset);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        const keys = parsed;
+        const key = [keys.default, ...Object.values(keys)].find((v) => typeof v === "string" && v.trim().startsWith("sb_publishable_"))?.trim();
+        if (key) return key;
+      }
+    } catch {
+    }
+  }
+  const legacy = configuredEnv(["SUPABASE_ANON_KEY", "VITE_SUPABASE_ANON_KEY"]);
+  if (legacy) return legacy;
+  throw new Error("SUPABASE_PUBLISHABLE_KEY, SUPABASE_PUBLISHABLE_KEYS, or SUPABASE_ANON_KEY is required");
+}
 function supabaseForUser(ctx) {
-  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
-    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
+  const token = ctx.getToken();
+  if (!token) throw new Error("supabaseForUser requires a verified OAuth token");
+  return createClient(supabaseProjectUrl(), supabasePublishableKey(), {
+    global: { headers: { Authorization: `Bearer ${token}` } },
     auth: { persistSession: false, autoRefreshToken: false }
   });
 }
+
+// src/lib/mcp/tools/list-groups.ts
 var list_groups_default = defineTool({
   name: "list_groups",
   title: "List Groups",
@@ -32,15 +76,8 @@ var list_groups_default = defineTool({
 });
 
 // src/lib/mcp/tools/list-instructions.ts
-import { createClient as createClient2 } from "npm:@supabase/supabase-js@^2.98.0";
 import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.20.1";
 import { z } from "npm:zod@^3.25.76";
-function supabaseForUser2(ctx) {
-  return createClient2(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
-    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-    auth: { persistSession: false, autoRefreshToken: false }
-  });
-}
 var list_instructions_default = defineTool2({
   name: "list_instructions",
   title: "List Instructions",
@@ -51,7 +88,7 @@ var list_instructions_default = defineTool2({
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ category_id }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    let query = supabaseForUser2(ctx).from("instruction_groups").select("id, name, description, color, category_id, created_at, updated_at").order("updated_at", { ascending: false });
+    let query = supabaseForUser(ctx).from("instruction_groups").select("id, name, description, color, category_id, created_at, updated_at").order("updated_at", { ascending: false });
     if (category_id) query = query.eq("category_id", category_id);
     const { data, error } = await query;
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
@@ -63,15 +100,8 @@ var list_instructions_default = defineTool2({
 });
 
 // src/lib/mcp/tools/get-production-instruction.ts
-import { createClient as createClient3 } from "npm:@supabase/supabase-js@^2.98.0";
 import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.20.1";
 import { z as z2 } from "npm:zod@^3.25.76";
-function supabaseForUser3(ctx) {
-  return createClient3(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
-    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-    auth: { persistSession: false, autoRefreshToken: false }
-  });
-}
 var get_production_instruction_default = defineTool3({
   name: "get_production_instruction",
   title: "Get Production Instruction",
@@ -82,7 +112,7 @@ var get_production_instruction_default = defineTool3({
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ instruction_id }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const client = supabaseForUser3(ctx);
+    const client = supabaseForUser(ctx);
     const { data: group, error: gErr } = await client.from("instruction_groups").select("id, name, description").eq("id", instruction_id).single();
     if (gErr || !group) {
       return { content: [{ type: "text", text: gErr?.message ?? "Instruction not found" }], isError: true };
@@ -105,15 +135,8 @@ ${version.content}` }
 });
 
 // src/lib/mcp/tools/list-threads.ts
-import { createClient as createClient4 } from "npm:@supabase/supabase-js@^2.98.0";
 import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@0.20.1";
 import { z as z3 } from "npm:zod@^3.25.76";
-function supabaseForUser4(ctx) {
-  return createClient4(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
-    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-    auth: { persistSession: false, autoRefreshToken: false }
-  });
-}
 var list_threads_default = defineTool4({
   name: "list_threads",
   title: "List Threads",
@@ -126,7 +149,7 @@ var list_threads_default = defineTool4({
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ instruction_id, rating, limit }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    let query = supabaseForUser4(ctx).from("threads").select("id, title, platform, model, rating, group_id, created_at").order("created_at", { ascending: false }).limit(limit);
+    let query = supabaseForUser(ctx).from("threads").select("id, title, platform, model, rating, group_id, created_at").order("created_at", { ascending: false }).limit(limit);
     if (instruction_id) query = query.eq("group_id", instruction_id);
     if (rating) query = query.eq("rating", rating);
     const { data, error } = await query;
@@ -139,15 +162,8 @@ var list_threads_default = defineTool4({
 });
 
 // src/lib/mcp/tools/create-thread.ts
-import { createClient as createClient5 } from "npm:@supabase/supabase-js@^2.98.0";
 import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@0.20.1";
 import { z as z4 } from "npm:zod@^3.25.76";
-function supabaseForUser5(ctx) {
-  return createClient5(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
-    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-    auth: { persistSession: false, autoRefreshToken: false }
-  });
-}
 function cleanThread(raw) {
   return raw.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").replace(/^\s*(Copy|Share|Edit|Regenerate|Continue|Send)\s*$/gim, "").replace(/^\s*\d+\s*\/\s*\d+\s*$/gm, "").trim();
 }
@@ -177,7 +193,7 @@ var create_thread_default = defineTool5({
       group_id: instruction_id ?? null,
       rating: rating ?? null
     };
-    const { data, error } = await supabaseForUser5(ctx).from("threads").insert(insert).select().single();
+    const { data, error } = await supabaseForUser(ctx).from("threads").insert(insert).select().single();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return {
       content: [{ type: "text", text: `Saved thread "${data.title}" (id: ${data.id}).` }],
@@ -187,15 +203,8 @@ var create_thread_default = defineTool5({
 });
 
 // src/lib/mcp/tools/add-thread-comment.ts
-import { createClient as createClient6 } from "npm:@supabase/supabase-js@^2.98.0";
 import { defineTool as defineTool6 } from "npm:@lovable.dev/mcp-js@0.20.1";
 import { z as z5 } from "npm:zod@^3.25.76";
-function supabaseForUser6(ctx) {
-  return createClient6(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
-    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-    auth: { persistSession: false, autoRefreshToken: false }
-  });
-}
 var add_thread_comment_default = defineTool6({
   name: "add_thread_comment",
   title: "Add Thread Comment",
@@ -207,7 +216,7 @@ var add_thread_comment_default = defineTool6({
   annotations: { readOnlyHint: false, idempotentHint: false, openWorldHint: false },
   handler: async ({ thread_id, content }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const { data, error } = await supabaseForUser6(ctx).from("thread_comments").insert({ thread_id, content, user_id: ctx.getUserId() }).select().single();
+    const { data, error } = await supabaseForUser(ctx).from("thread_comments").insert({ thread_id, content, user_id: ctx.getUserId() }).select().single();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return {
       content: [{ type: "text", text: `Comment added to thread ${thread_id}.` }],
