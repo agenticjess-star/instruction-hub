@@ -191,7 +191,8 @@ var create_thread_default = defineTool5({
       platform: platform ?? "",
       model: model ?? "",
       group_id: instruction_id ?? null,
-      rating: rating ?? null
+      rating: rating ?? null,
+      source: "mcp"
     };
     const { data, error } = await supabaseForUser(ctx).from("threads").insert(insert).select().single();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
