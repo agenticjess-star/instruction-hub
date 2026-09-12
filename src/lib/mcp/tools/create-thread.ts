@@ -1,13 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
-import { defineTool, type ToolContext } from "@lovable.dev/mcp-js";
+import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-
-function supabaseForUser(ctx: ToolContext) {
-  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
-    global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-}
+import { supabaseForUser } from "../supabase";
 
 // Minimal thread cleaner (mirrors src/lib/cleanThread logic conservatively).
 function cleanThread(raw: string): string {
@@ -44,6 +37,7 @@ export default defineTool({
       model: model ?? "",
       group_id: instruction_id ?? null,
       rating: rating ?? null,
+      source: "mcp",
     };
     const { data, error } = await supabaseForUser(ctx).from("threads").insert(insert).select().single();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
