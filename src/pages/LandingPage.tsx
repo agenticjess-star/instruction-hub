@@ -132,8 +132,10 @@ const LandingPage = () => {
             <a href="#how" className="nav-link py-6 text-[13px] text-muted-foreground hover:text-foreground">How it works</a>
             <a href="#surfaces" className="nav-link py-6 text-[13px] text-muted-foreground hover:text-foreground">Surfaces</a>
             <a href="#pricing" className="nav-link py-6 text-[13px] text-muted-foreground hover:text-foreground">Pricing</a>
+            <Link to="/agents" className="nav-link py-6 text-[13px] text-muted-foreground hover:text-foreground">Agents</Link>
           </nav>
           <div className="flex items-center gap-4">
+            <Link to="/agents" className="md:hidden text-[13px] text-muted-foreground hover:text-foreground">Agents</Link>
             <Link
               to="/login"
               className="hidden sm:flex items-center h-11 text-[13px] text-muted-foreground hover:text-foreground link-underline"
