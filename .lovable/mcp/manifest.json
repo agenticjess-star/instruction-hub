@@ -5,15 +5,16 @@
   "auth": {
     "type": "oauth",
     "issuer": "https://avttfayhcbfrglyxybgp.supabase.co/auth/v1",
+    "require_oauth_client_claim": true,
     "accepted_audiences": [
       "authenticated"
     ]
   },
   "mcp": {
     "server": {
-      "name": "instruction-os-mcp",
+      "name": "instructionloop",
       "version": "0.1.0",
-      "title": "Instruction OS"
+      "title": "InstructionLoop"
     },
     "tools": [
       {
@@ -123,7 +124,7 @@
       {
         "name": "create_thread",
         "title": "Save Thread",
-        "description": "Save a conversation thread. The raw content is auto-cleaned. Optionally link to an instruction set.",
+        "description": "Save a verbatim transcript or clearly labeled context as MCP evidence. Use chronological ## User / ## Assistant turns; optionally link an owned instruction and include known model/platform.",
         "annotations": {
           "readOnlyHint": false,
           "idempotentHint": false,
@@ -141,7 +142,7 @@
             "content": {
               "type": "string",
               "minLength": 1,
-              "description": "Raw pasted thread content (will be auto-cleaned)."
+              "description": "Verbatim transcript; use ## User and ## Assistant headings. Preserve code blocks and exact turns."
             },
             "instruction_id": {
               "type": "string",
@@ -198,7 +199,7 @@
               "type": "string",
               "minLength": 1,
               "maxLength": 2000,
-              "description": "Comment text."
+              "description": "Feedback, friction points, positives, notes, context or checkpoint; keep separate from the transcript."
             }
           },
           "required": [
