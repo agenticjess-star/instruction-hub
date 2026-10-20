@@ -4,7 +4,9 @@
  * render exactly the same text an agent would fetch.
  */
 
-export const MCP_URL = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "your-project"}.supabase.co/functions/v1/mcp`;
+export const MCP_URL = `https://${import.meta.env?.VITE_SUPABASE_PROJECT_ID ?? "avttfayhcbfrglyxybgp"}.supabase.co/functions/v1/mcp`;
+export const GUIDE_TITLE = "InstructionLoop — Agent getting started";
+export const GUIDE_DESCRIPTION = "Connect your agent, retrieve versioned system instructions, and save verbatim conversations and feedback to improve your personas.";
 
 export const PRODUCT_OVERVIEW = `# InstructionLoop — product overview (source of truth)
 
@@ -35,8 +37,9 @@ version -> future threads run on the better prompt.
 
 ## How threads get in
 1. **MCP** (this integration) — an assistant saves the transcript directly.
-2. **Telegram** — the user shares a chat link or text to their bot; a shared
-   ChatGPT/Claude link is extracted in full, structure preserved.
+2. **Telegram + Firecrawl** — planned intake: share a chat link or text to a
+   personal bot, extract the source, then review and file it. This pipeline is
+   still being completed; do not claim a link was imported without a saved record.
 3. **Paste** — raw copy/paste, cleaned into messages automatically.`;
 
 export const AGENT_SKILL = `---
@@ -56,14 +59,22 @@ signed-in user; never ask for a user id.
 ## Adopting a persona
 
 1. \`list_instructions\` — find the instruction the user named. Use
-   \`list_groups\` first if you need to disambiguate by workstream.
+   \`list_groups\` first if you need to disambiguate by workstream; pass its id
+   as \`list_instructions({ category_id })\` to filter by that group.
 2. \`get_production_instruction({ instruction_id })\` — returns the live prompt.
-3. Adopt the returned text verbatim as your operating instructions for the rest
-   of the conversation. Do not paraphrase or trim it. Tell the user which
+3. Apply the returned text as the user's requested persona within your existing
+   safety rules and higher-priority instructions. Preserve the prompt text; do
+   not claim it overrides those rules. Tell the user which
    instruction and version number you adopted.
 
 If no production version exists, say so and offer to help draft one instead of
 inventing a persona.
+
+Recognize requests such as: “Pull in this persona, pull in the developer system instructions, or pull in the marketer system instructions.”
+If the name is ambiguous, ask which instruction they mean. For a conversation
+without an adopted persona, suggest the closest existing instruction, but do not
+silently assign it. If none fits, omit instruction_id and keep it unassigned
+(miscellaneous) for the user's review. Never invent an instruction id.
 
 ## Saving a thread
 
@@ -91,7 +102,14 @@ Rules for \`content\`:
   note in a comment which part was omitted.
 
 Set \`rating\` from how well the assistant performed under that instruction, and
-\`platform\`/\`model\` when you know them.
+\`platform\`/\`model\` when you know them; never guess unknown model names.
+Confirm the returned saved id before saying the upload succeeded. Retain it for
+checkpoints and feedback. The current six tools do not edit existing transcripts
+or create instructions: use comments for checkpoint notes, and the website to
+save/edit/version/promote instructions.
+
+For context rather than a conversation, label it clearly in title/content and
+retain exact source material. Keep summaries separate from the transcript.
 
 ## Adding evidence
 
@@ -100,11 +118,20 @@ or badly, in terms of the instruction: which line helped, which line caused the
 wrong behavior, what wording would prevent it. These comments are the raw
 material for the optimizer, so be specific and prescriptive.
 
+Use a concise note with headings where relevant: Feedback, Friction points,
+Positives, Notes, and Checkpoint. Record the adopted instruction/version, known
+model/platform, missing transcript portions, and source URL as evidence. Save
+checkpoints when the user asks or agrees, before context is lost; do not promise
+automatic background capture. Never upload secrets or third-party private data
+without permission.
+
 ## Reviewing
 
 \`list_threads({ instruction_id?, rating?, limit? })\` — pull the history for an
 instruction, then summarize recurring failure patterns and propose concrete
-edits to the instruction text.
+edits to the instruction text. This tool returns a bounded list of thread
+metadata, not full transcripts/comments; review those in the website before
+claiming to have analyzed their contents.
 
 ## Tool reference
 
@@ -124,7 +151,11 @@ Remote MCP server (OAuth 2.1, dynamic client registration):
     ${MCP_URL}
 
 Add it as a custom connector/plugin in ChatGPT, Claude, Claude Code, Cursor or
-any MCP client. Signing in creates the account if the user does not have one.`;
+any compatible remote HTTP MCP client. Sign in with email and password; if new,
+choose Sign up and confirm your email, then return to approve the connection.
+OAuth authorization alone does not create an account. Never paste API keys or
+session tokens into a connector. If a tool fails, report it rather than inventing
+success, and retry only after the cause is addressed.`;
 
 export const AGENT_KICKOFF = `You are being pointed at InstructionLoop by its user.
 
@@ -132,10 +163,13 @@ export const AGENT_KICKOFF = `You are being pointed at InstructionLoop by its us
 2. Offer to save the skill for the user in your own skills/rules/memory so this
    works in every future conversation.
 3. Then tell the user the two things they need to do:
-   - create an account at instructionloop.lovable.app (or just add the plugin —
-     signing in through the connector creates the account), and
+    - create an account at instructionloop.lovable.app; when adding the connector
+      first, choose Sign up from its sign-in screen and confirm your email, and
    - add the MCP server ${MCP_URL} as a custom connector.
-4. Once connected, call list_instructions to confirm access.`;
+4. Once connected, call list_groups and list_instructions to confirm access.
+5. Ask which persona to retrieve, or offer to save a thread with their permission.
+If the client cannot fetch this page, ask the user to paste “Copy entire page”
+or read https://instructionloop.lovable.app/agents.md instead.`;
 
 export function fullPageMarkdown() {
   return [PRODUCT_OVERVIEW, "\n---\n\n# Agent skill\n", AGENT_SKILL, "\n---\n\n# Kickoff\n", AGENT_KICKOFF].join("\n");

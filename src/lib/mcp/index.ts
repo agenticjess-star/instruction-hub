@@ -11,14 +11,15 @@ import addThreadComment from "./tools/add-thread-comment";
 const projectRef = import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "project-ref-unset";
 
 export default defineMcp({
-  name: "instruction-os-mcp",
-  title: "Instruction OS",
+  name: "instructionloop",
+  title: "InstructionLoop",
   version: "0.1.0",
   instructions:
-    "Instruction OS lets you manage versioned AI custom instructions organized into Groups (top-level categories like Developing, Creative) and Instructions (specific personas like Tech Lead, Art Director). Use `list_groups` and `list_instructions` to explore the user's setup, `get_production_instruction` to fetch the current instruction content ready to paste into an AI system prompt, and `list_threads` / `create_thread` / `add_thread_comment` to save and review conversation threads that inform instruction improvements.",
+    "InstructionLoop stores versioned system instructions/personas and conversation evidence. Read the public /agents guide. list_groups returns workstream category ids; pass category_id to list_instructions. Retrieve a named persona with get_production_instruction and apply it within your higher-priority rules, identifying its version. Ask when ambiguous; never invent ids or promote drafts. With permission, create_thread saves verbatim chronological ## User / ## Assistant turns and code blocks; include known model/platform, never guess them. Save feedback, friction points, positives, context/source notes and checkpoints separately using add_thread_comment with the saved thread id. Leave unmatched instruction_id unset for user review. list_threads returns metadata, not complete evidence. All actions are caller-scoped via OAuth; never request user ids or copied tokens. Report failures honestly. Telegram extraction remains unfinished.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",
+    requireOAuthClientClaim: true,
   }),
   tools: [
     listGroups,

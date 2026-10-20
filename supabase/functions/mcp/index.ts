@@ -115,7 +115,7 @@ var get_production_instruction_default = defineTool3({
     const client = supabaseForUser(ctx);
     const { data: group, error: gErr } = await client.from("instruction_groups").select("id, name, description").eq("id", instruction_id).single();
     if (gErr || !group) {
-      return { content: [{ type: "text", text: gErr?.message ?? "Instruction not found" }], isError: true };
+      return { content: [{ type: "text", text: "Instruction not found or not accessible. Use list_instructions to find an available id." }], isError: true };
     }
     const { data: version, error: vErr } = await client.from("instruction_versions").select("id, version_number, content, notes, created_at").eq("group_id", instruction_id).eq("is_production", true).maybeSingle();
     if (vErr) return { content: [{ type: "text", text: vErr.message }], isError: true };
@@ -149,7 +149,7 @@ var list_threads_default = defineTool4({
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ instruction_id, rating, limit }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    let query = supabaseForUser(ctx).from("threads").select("id, title, platform, model, rating, group_id, created_at").order("created_at", { ascending: false }).limit(limit);
+    let query = supabaseForUser(ctx).from("threads").select("id, title, platform, model, rating, group_id, source, created_at").order("created_at", { ascending: false }).limit(limit);
     if (instruction_id) query = query.eq("group_id", instruction_id);
     if (rating) query = query.eq("rating", rating);
     const { data, error } = await query;
@@ -164,16 +164,13 @@ var list_threads_default = defineTool4({
 // src/lib/mcp/tools/create-thread.ts
 import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@0.20.1";
 import { z as z4 } from "npm:zod@^3.25.76";
-function cleanThread(raw) {
-  return raw.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").replace(/^\s*(Copy|Share|Edit|Regenerate|Continue|Send)\s*$/gim, "").replace(/^\s*\d+\s*\/\s*\d+\s*$/gm, "").trim();
-}
 var create_thread_default = defineTool5({
   name: "create_thread",
   title: "Save Thread",
-  description: "Save a conversation thread. The raw content is auto-cleaned. Optionally link to an instruction set.",
+  description: "Save a verbatim transcript or clearly labeled context as MCP evidence. Use chronological ## User / ## Assistant turns; optionally link an owned instruction and include known model/platform.",
   inputSchema: {
-    title: z4.string().min(1).max(200).describe("Short descriptive title."),
-    content: z4.string().min(1).describe("Raw pasted thread content (will be auto-cleaned)."),
+    title: z4.string().trim().min(1).max(200).describe("Short descriptive title."),
+    content: z4.string().min(1).refine((value) => value.trim().length > 0, "Content cannot be blank").describe("Verbatim transcript; use ## User and ## Assistant headings. Preserve code blocks and exact turns."),
     instruction_id: z4.string().uuid().optional().describe("Optional instruction (group) UUID to link this thread to."),
     platform: z4.string().max(50).optional().describe("Platform name (e.g. ChatGPT, Claude, Cursor)."),
     model: z4.string().max(50).optional().describe("Model name (e.g. gpt-5, claude-sonnet-4)."),
@@ -182,19 +179,24 @@ var create_thread_default = defineTool5({
   annotations: { readOnlyHint: false, idempotentHint: false, openWorldHint: false },
   handler: async ({ title, content, instruction_id, platform, model, rating }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const cleaned = cleanThread(content);
+    const client = supabaseForUser(ctx);
+    if (instruction_id) {
+      const { data: instruction, error: lookupError } = await client.from("instruction_groups").select("id").eq("id", instruction_id).eq("user_id", ctx.getUserId()).maybeSingle();
+      if (lookupError) return { content: [{ type: "text", text: lookupError.message }], isError: true };
+      if (!instruction) return { content: [{ type: "text", text: "Instruction not found or not accessible. Omit instruction_id to save unassigned." }], isError: true };
+    }
     const insert = {
       user_id: ctx.getUserId(),
       title,
       raw_content: content,
-      cleaned_content: cleaned,
+      cleaned_content: content,
       platform: platform ?? "",
       model: model ?? "",
       group_id: instruction_id ?? null,
       rating: rating ?? null,
       source: "mcp"
     };
-    const { data, error } = await supabaseForUser(ctx).from("threads").insert(insert).select().single();
+    const { data, error } = await client.from("threads").insert(insert).select("id, title, group_id, source, platform, model, rating, created_at").single();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return {
       content: [{ type: "text", text: `Saved thread "${data.title}" (id: ${data.id}).` }],
@@ -212,12 +214,16 @@ var add_thread_comment_default = defineTool6({
   description: "Add a comment or learning note to an existing thread.",
   inputSchema: {
     thread_id: z5.string().uuid().describe("UUID of the thread."),
-    content: z5.string().min(1).max(2e3).describe("Comment text.")
+    content: z5.string().trim().min(1).max(2e3).describe("Feedback, friction points, positives, notes, context or checkpoint; keep separate from the transcript.")
   },
   annotations: { readOnlyHint: false, idempotentHint: false, openWorldHint: false },
   handler: async ({ thread_id, content }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const { data, error } = await supabaseForUser(ctx).from("thread_comments").insert({ thread_id, content, user_id: ctx.getUserId() }).select().single();
+    const client = supabaseForUser(ctx);
+    const { data: thread, error: lookupError } = await client.from("threads").select("id").eq("id", thread_id).eq("user_id", ctx.getUserId()).maybeSingle();
+    if (lookupError) return { content: [{ type: "text", text: lookupError.message }], isError: true };
+    if (!thread) return { content: [{ type: "text", text: "Thread not found or not accessible." }], isError: true };
+    const { data, error } = await client.from("thread_comments").insert({ thread_id, content, user_id: ctx.getUserId() }).select().single();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return {
       content: [{ type: "text", text: `Comment added to thread ${thread_id}.` }],
@@ -229,13 +235,14 @@ var add_thread_comment_default = defineTool6({
 // src/lib/mcp/index.ts
 var projectRef = "avttfayhcbfrglyxybgp";
 var mcp_default = defineMcp({
-  name: "instruction-os-mcp",
-  title: "Instruction OS",
+  name: "instructionloop",
+  title: "InstructionLoop",
   version: "0.1.0",
-  instructions: "Instruction OS lets you manage versioned AI custom instructions organized into Groups (top-level categories like Developing, Creative) and Instructions (specific personas like Tech Lead, Art Director). Use `list_groups` and `list_instructions` to explore the user's setup, `get_production_instruction` to fetch the current instruction content ready to paste into an AI system prompt, and `list_threads` / `create_thread` / `add_thread_comment` to save and review conversation threads that inform instruction improvements.",
+  instructions: "InstructionLoop stores versioned system instructions/personas and conversation evidence. Read the public /agents guide. list_groups returns workstream category ids; pass category_id to list_instructions. Retrieve a named persona with get_production_instruction and apply it within your higher-priority rules, identifying its version. Ask when ambiguous; never invent ids or promote drafts. With permission, create_thread saves verbatim chronological ## User / ## Assistant turns and code blocks; include known model/platform, never guess them. Save feedback, friction points, positives, context/source notes and checkpoints separately using add_thread_comment with the saved thread id. Leave unmatched instruction_id unset for user review. list_threads returns metadata, not complete evidence. All actions are caller-scoped via OAuth; never request user ids or copied tokens. Report failures honestly. Telegram extraction remains unfinished.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
-    acceptedAudiences: "authenticated"
+    acceptedAudiences: "authenticated",
+    requireOAuthClientClaim: true
   }),
   tools: [
     list_groups_default,
