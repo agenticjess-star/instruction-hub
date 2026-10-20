@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Layers, Check, X, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,64 +17,76 @@ export default function OAuthConsent() {
   const [details, setDetails] = useState<AuthDetails>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     let active = true;
+    setError(null);
+    setDetails(null);
     (async () => {
+      try {
       if (!authorizationId) {
         setError("Missing authorization_id");
         return;
       }
       const { data: sess } = await supabase.auth.getSession();
+      if (!active) return;
       if (!sess.session) {
         // Preserve the FULL consent URL — including query — so we return here after sign-in.
         const next = window.location.pathname + window.location.search;
         window.location.href = "/login?next=" + encodeURIComponent(next);
         return;
       }
-      // beta namespace — cast to any so TypeScript doesn't complain about missing types
-      const { data, error } = await (supabase.auth as any).oauth.getAuthorizationDetails(authorizationId);
+      const { data, error } = await supabase.auth.oauth.getAuthorizationDetails(authorizationId);
       if (!active) return;
       if (error) {
         setError(error.message);
         return;
       }
-      const immediate = data?.redirect_url ?? data?.redirect_to;
-      if (immediate && !data?.client) {
-        window.location.href = immediate;
+      if (data && "redirect_url" in data) {
+        window.location.href = data.redirect_url;
         return;
       }
+      if (!data?.client) { setError("This connection request is unavailable. Start again from your agent's connector settings."); return; }
       setDetails(data);
+      } catch (failure) {
+        if (active) setError(failure instanceof Error ? failure.message : "Could not load the connection request.");
+      }
     })();
     return () => {
       active = false;
     };
-  }, [authorizationId]);
+  }, [authorizationId, retry]);
 
   async function decide(approve: boolean) {
+    if (busy || !details) return;
     setBusy(true);
     setError(null);
-    const oauth = (supabase.auth as any).oauth;
+    try {
+    const oauth = supabase.auth.oauth;
     const { data, error } = approve
-      ? await oauth.approveAuthorization(authorizationId)
-      : await oauth.denyAuthorization(authorizationId);
+      ? await oauth.approveAuthorization(authorizationId, { skipBrowserRedirect: true })
+      : await oauth.denyAuthorization(authorizationId, { skipBrowserRedirect: true });
     if (error) {
       setBusy(false);
       setError(error.message);
       return;
     }
-    const target = data?.redirect_url ?? data?.redirect_to;
+    const target = data?.redirect_url;
     if (!target) {
       setBusy(false);
       setError("No redirect returned by the authorization server.");
       return;
     }
     window.location.href = target;
+    } catch (failure) {
+      setBusy(false);
+      setError(failure instanceof Error ? failure.message : "Could not finish authorization. Try again.");
+    }
   }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-5">
-      <div className="fixed top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[250px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -85,7 +97,7 @@ export default function OAuthConsent() {
           <div className="w-7 h-7 rounded-lg bg-primary/12 border border-primary/25 flex items-center justify-center">
             <Layers className="w-3.5 h-3.5 text-primary" />
           </div>
-          <span className="font-display font-bold text-sm text-foreground tracking-tight">Instruction OS</span>
+          <span className="font-display font-bold text-sm text-foreground">InstructionLoop</span>
         </div>
 
         {error ? (
@@ -93,6 +105,10 @@ export default function OAuthConsent() {
             <AlertCircle className="w-6 h-6 text-destructive mx-auto mb-3" />
             <h1 className="text-lg font-bold text-foreground mb-1">Authorization Failed</h1>
             <p className="text-xs text-muted-foreground">{error}</p>
+            <div className="mt-5 flex flex-wrap justify-center gap-3">
+              {authorizationId && <Button variant="outline" size="sm" onClick={() => { setBusy(false); setRetry(value => value + 1); }}>Try again</Button>}
+              <Button asChild variant="link" size="sm"><Link to="/agents">Agent guide</Link></Button>
+            </div>
           </div>
         ) : !details ? (
           <div className="card-elevated p-8 text-center">
@@ -102,7 +118,7 @@ export default function OAuthConsent() {
         ) : (
           <div className="card-elevated p-6">
             <h1 className="text-lg font-bold text-foreground text-center mb-1 tracking-tight">
-              Connect {details.client?.name ?? "this app"} to Instruction OS
+              Connect {details.client?.name ?? "this app"} to InstructionLoop
             </h1>
             <p className="text-xs text-muted-foreground text-center mb-6">
               {details.client?.name ?? "The client"} will be able to read and manage your instruction groups,

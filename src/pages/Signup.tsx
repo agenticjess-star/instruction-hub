@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import LogoAnimation from "@/components/LogoAnimation";
+import { oauthReturnPath } from "@/lib/oauth-return-path";
 
 const Signup = () => {
   const [email, setEmail] = useState("");
@@ -14,26 +15,31 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
   const [logoCollapsed, setLogoCollapsed] = useState(false);
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const next = oauthReturnPath(params.get("next"));
+  const loginPath = `/login?next=${encodeURIComponent(next)}`;
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setLogoCollapsed(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { display_name: displayName },
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: new URL(next, window.location.origin).href,
       },
     });
     if (error) {
       setLoading(false);
       setLogoCollapsed(false);
       toast.error(error.message);
+    } else if (data.session) {
+      navigate(next);
     } else {
       toast.success("Check your email to confirm your account");
-      setTimeout(() => navigate("/login"), 800);
+      setTimeout(() => navigate(loginPath), 800);
     }
   };
 
@@ -86,7 +92,7 @@ const Signup = () => {
         </form>
 
         <p className="mt-6 text-center text-xs text-muted-foreground/40">
-          Already have an account? <Link to="/login" className="text-primary/70 hover:text-primary transition-colors font-medium">Sign in</Link>
+          Already have an account? <Link to={loginPath} className="text-primary/70 hover:text-primary transition-colors font-medium">Sign in</Link>
         </p>
       </motion.div>
     </div>

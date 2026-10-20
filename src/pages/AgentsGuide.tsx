@@ -1,40 +1,50 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Copy, Check, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   MCP_URL,
   PRODUCT_OVERVIEW,
   AGENT_SKILL,
   AGENT_KICKOFF,
   fullPageMarkdown,
+  GUIDE_TITLE,
+  GUIDE_DESCRIPTION,
 } from "@/lib/agentGuide";
 
 const CopyButton = ({ text, label }: { text: string; label: string }) => {
   const [copied, setCopied] = useState(false);
   return (
-    <button
-      onClick={() => {
-        navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1600);
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1600);
+        } catch {
+          toast.error("Could not copy. Select the text or open the plain-text guide.");
+        }
       }}
-      className="inline-flex items-center gap-2 h-10 px-4 border border-foreground/80 text-[13px] font-mono uppercase tracking-wide text-foreground hover:bg-foreground hover:text-background transition-colors"
+      className="font-mono text-xs"
     >
       {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
       {copied ? "Copied" : label}
-    </button>
+    </Button>
   );
 };
 
 const Block = ({ text }: { text: string }) => (
-  <div className="relative border border-border bg-muted/40">
-    <pre className="p-5 pr-14 text-[12px] leading-relaxed font-mono text-foreground whitespace-pre-wrap overflow-x-auto">
-      {text}
-    </pre>
-    <div className="absolute top-3 right-3">
+  <div className="border border-border bg-muted/40">
+    <div className="flex justify-end px-4 pt-3">
       <CopyButton text={text} label="Copy" />
     </div>
+    <pre className="p-4 sm:p-5 text-xs leading-relaxed font-mono text-foreground whitespace-pre-wrap break-words min-w-0">
+      {text}
+    </pre>
   </div>
 );
 
@@ -46,25 +56,43 @@ const Rule = ({ n, title }: { n: string; title: string }) => (
 );
 
 const AgentsGuide = () => {
+  const { user } = useAuth();
+  useEffect(() => {
+    const oldTitle = document.title;
+    document.title = GUIDE_TITLE;
+    const selectors = ['meta[name="description"]', 'meta[property="og:description"]', 'meta[name="twitter:description"]', 'meta[property="og:title"]', 'meta[name="twitter:title"]'];
+    const previous = selectors.map(selector => {
+      const node = document.querySelector(selector);
+      const content = node?.getAttribute("content");
+      node?.setAttribute("content", selector.includes("title") ? GUIDE_TITLE : GUIDE_DESCRIPTION);
+      return { node, content };
+    });
+    return () => {
+      document.title = oldTitle;
+      previous.forEach(({ node, content }) => { if (content !== null && content !== undefined) node?.setAttribute("content", content); });
+    };
+  }, []);
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-foreground/80">
-        <div className="max-w-[900px] mx-auto px-5 sm:px-8 h-[64px] flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
+        <div className="max-w-[900px] mx-auto px-5 sm:px-8 min-h-16 py-3 flex flex-wrap gap-3 items-center justify-between">
+          <Link to="/" className="flex items-center gap-2.5 shrink-0">
             <span className="w-3 h-3 bg-primary" aria-hidden />
             <span className="font-mono text-[12px] uppercase tracking-[0.18em] text-foreground">
               InstructionLoop
             </span>
           </Link>
           <div className="flex items-center gap-4">
+            {user ? <Button asChild variant="outline" size="sm"><Link to="/dashboard">Dashboard</Link></Button> : <>
             <Link to="/login" className="text-[13px] text-muted-foreground hover:text-foreground">
               Sign in
             </Link>
-            <Link to="/signup">
-              <Button className="h-9 px-4 text-[13px] rounded-none bg-foreground text-background hover:bg-foreground/90">
+              <Button asChild className="h-9 px-4 text-[13px] rounded-none bg-foreground text-background hover:bg-foreground/90">
+                <Link to="/signup">
                 Create account
+                </Link>
               </Button>
-            </Link>
+            </>}
           </div>
         </div>
       </header>
@@ -74,7 +102,7 @@ const AgentsGuide = () => {
           For agents &amp; their humans
         </p>
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground leading-[1.05] mb-5">
-          Agent onboarding
+          InstructionLoop
         </h1>
         <p className="text-base text-muted-foreground leading-relaxed max-w-[640px] mb-8">
           This page is the source of truth for what InstructionLoop is and how an AI agent should
@@ -85,6 +113,7 @@ const AgentsGuide = () => {
         <div className="flex flex-wrap gap-3 mb-6">
           <CopyButton text={fullPageMarkdown()} label="Copy entire page" />
           <CopyButton text={MCP_URL} label="Copy MCP URL" />
+          <Button asChild variant="link" size="sm"><a href="/agents.md">Plain-text guide</a></Button>
         </div>
 
         <div className="border border-foreground/80 p-5 mb-16">
@@ -144,8 +173,8 @@ const AgentsGuide = () => {
             <div>
               <p className="text-foreground font-semibold mb-1">Anything else</p>
               <p>
-                Any client that supports remote MCP servers over HTTP works. Signing in during
-                authorization creates your account if you do not have one yet.
+                Use a client supporting remote HTTP MCP with OAuth. New here? Choose Sign up on
+                the sign-in screen, confirm your email, then return to approve the connection.
               </p>
             </div>
             <p className="text-xs text-muted-foreground/70">

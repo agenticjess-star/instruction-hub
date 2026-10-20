@@ -19,7 +19,7 @@ export default defineTool({
       .eq("id", instruction_id)
       .single();
     if (gErr || !group) {
-      return { content: [{ type: "text", text: gErr?.message ?? "Instruction not found" }], isError: true };
+      return { content: [{ type: "text", text: "Instruction not found or not accessible. Use list_instructions to find an available id." }], isError: true };
     }
     const { data: version, error: vErr } = await client
       .from("instruction_versions")

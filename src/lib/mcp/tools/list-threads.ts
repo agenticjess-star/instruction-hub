@@ -16,7 +16,7 @@ export default defineTool({
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     let query = supabaseForUser(ctx)
       .from("threads")
-      .select("id, title, platform, model, rating, group_id, created_at")
+      .select("id, title, platform, model, rating, group_id, source, created_at")
       .order("created_at", { ascending: false })
       .limit(limit);
     if (instruction_id) query = query.eq("group_id", instruction_id);

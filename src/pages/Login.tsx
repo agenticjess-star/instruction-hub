@@ -6,13 +6,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import LogoAnimation from "@/components/LogoAnimation";
-
-// Only allow same-origin relative paths to prevent open redirects.
-function safeNext(raw: string | null): string {
-  if (!raw) return "/dashboard";
-  if (!raw.startsWith("/") || raw.startsWith("//")) return "/dashboard";
-  return raw;
-}
+import { oauthReturnPath } from "@/lib/oauth-return-path";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -21,7 +15,7 @@ const Login = () => {
   const [logoCollapsed, setLogoCollapsed] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const next = safeNext(searchParams.get("next"));
+  const next = oauthReturnPath(searchParams.get("next"));
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
