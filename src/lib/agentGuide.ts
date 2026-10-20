@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 /**
  * Source-of-truth copy for the public /agents page.
  * Kept as plain strings so both the page and the "copy everything" action
