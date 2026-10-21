@@ -5,11 +5,8 @@ import { Layers, Check, X, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
-type AuthDetails = {
-  client?: { name?: string; client_uri?: string; logo_uri?: string };
-  redirect_url?: string;
-  redirect_to?: string;
-} | null;
+type AuthorizationResponse = Awaited<ReturnType<typeof supabase.auth.oauth.getAuthorizationDetails>>;
+type AuthDetails = Extract<NonNullable<AuthorizationResponse["data"]>, { client: unknown }> | null;
 
 export default function OAuthConsent() {
   const [params] = useSearchParams();
@@ -33,7 +30,7 @@ export default function OAuthConsent() {
       if (!active) return;
       if (!sess.session) {
         // Preserve the FULL consent URL — including query — so we return here after sign-in.
-        const next = window.location.pathname + window.location.search;
+        const next = window.location.pathname + window.location.search + window.location.hash;
         window.location.href = "/login?next=" + encodeURIComponent(next);
         return;
       }
@@ -47,7 +44,7 @@ export default function OAuthConsent() {
         window.location.href = data.redirect_url;
         return;
       }
-      if (!data?.client) { setError("This connection request is unavailable. Start again from your agent's connector settings."); return; }
+      if (!data || !("client" in data)) { setError("This connection request is unavailable. Start again from your agent's connector settings."); return; }
       setDetails(data);
       } catch (failure) {
         if (active) setError(failure instanceof Error ? failure.message : "Could not load the connection request.");

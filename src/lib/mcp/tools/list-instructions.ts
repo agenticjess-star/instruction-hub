@@ -5,7 +5,7 @@ import { supabaseForUser } from "../supabase";
 export default defineTool({
   name: "list_instructions",
   title: "List Instructions",
-  description: "List instruction sets (formerly 'groups') for the signed-in user. Optionally filter by category (group).",
+  description: "List up to 100 signed-in user instruction personas. Filter by category_id from list_groups; instruction ids are used for production retrieval and thread links.",
   inputSchema: {
     category_id: z.string().uuid().optional().describe("Optional UUID of a top-level group to filter by."),
   },
@@ -15,7 +15,8 @@ export default defineTool({
     let query = supabaseForUser(ctx)
       .from("instruction_groups")
       .select("id, name, description, color, category_id, created_at, updated_at")
-      .order("updated_at", { ascending: false });
+      .order("updated_at", { ascending: false })
+      .limit(100);
     if (category_id) query = query.eq("category_id", category_id);
     const { data, error } = await query;
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };

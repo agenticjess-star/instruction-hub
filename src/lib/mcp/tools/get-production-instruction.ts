@@ -17,8 +17,9 @@ export default defineTool({
       .from("instruction_groups")
       .select("id, name, description")
       .eq("id", instruction_id)
-      .single();
-    if (gErr || !group) {
+      .maybeSingle();
+    if (gErr) return { content: [{ type: "text", text: gErr.message }], isError: true };
+    if (!group) {
       return { content: [{ type: "text", text: "Instruction not found or not accessible. Use list_instructions to find an available id." }], isError: true };
     }
     const { data: version, error: vErr } = await client

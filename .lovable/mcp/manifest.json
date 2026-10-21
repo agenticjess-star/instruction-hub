@@ -36,7 +36,7 @@
       {
         "name": "list_instructions",
         "title": "List Instructions",
-        "description": "List instruction sets (formerly 'groups') for the signed-in user. Optionally filter by category (group).",
+        "description": "List up to 100 signed-in user instruction personas. Filter by category_id from list_groups; instruction ids are used for production retrieval and thread links.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
