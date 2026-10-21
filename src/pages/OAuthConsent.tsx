@@ -30,7 +30,7 @@ export default function OAuthConsent() {
       if (!active) return;
       if (!sess.session) {
         // Preserve the FULL consent URL — including query — so we return here after sign-in.
-         const next = window.location.pathname + window.location.search + window.location.hash;
+        const next = window.location.pathname + window.location.search + window.location.hash;
         window.location.href = "/login?next=" + encodeURIComponent(next);
         return;
       }
@@ -44,7 +44,7 @@ export default function OAuthConsent() {
         window.location.href = data.redirect_url;
         return;
       }
-      if (!data?.client) { setError("This connection request is unavailable. Start again from your agent's connector settings."); return; }
+      if (!data || !("client" in data)) { setError("This connection request is unavailable. Start again from your agent's connector settings."); return; }
       setDetails(data);
       } catch (failure) {
         if (active) setError(failure instanceof Error ? failure.message : "Could not load the connection request.");
