@@ -66,7 +66,7 @@ var list_groups_default = defineTool({
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async (_input, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    const { data, error } = await supabaseForUser(ctx).from("categories").select("id, name, description, color, created_at, updated_at").order("created_at", { ascending: true });
+    const { data, error } = await supabaseForUser(ctx).from("categories").select("id, name, description, color, created_at, updated_at").order("created_at", { ascending: true }).limit(100);
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return {
       content: [{ type: "text", text: JSON.stringify(data ?? [], null, 2) }],
@@ -81,14 +81,14 @@ import { z } from "npm:zod@^3.25.76";
 var list_instructions_default = defineTool2({
   name: "list_instructions",
   title: "List Instructions",
-  description: "List instruction sets (formerly 'groups') for the signed-in user. Optionally filter by category (group).",
+  description: "List up to 100 signed-in user instruction personas. Filter by category_id from list_groups; instruction ids are used for production retrieval and thread links.",
   inputSchema: {
     category_id: z.string().uuid().optional().describe("Optional UUID of a top-level group to filter by.")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ category_id }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    let query = supabaseForUser(ctx).from("instruction_groups").select("id, name, description, color, category_id, created_at, updated_at").order("updated_at", { ascending: false });
+    let query = supabaseForUser(ctx).from("instruction_groups").select("id, name, description, color, category_id, created_at, updated_at").order("updated_at", { ascending: false }).limit(100);
     if (category_id) query = query.eq("category_id", category_id);
     const { data, error } = await query;
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
@@ -113,8 +113,9 @@ var get_production_instruction_default = defineTool3({
   handler: async ({ instruction_id }, ctx) => {
     if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     const client = supabaseForUser(ctx);
-    const { data: group, error: gErr } = await client.from("instruction_groups").select("id, name, description").eq("id", instruction_id).single();
-    if (gErr || !group) {
+    const { data: group, error: gErr } = await client.from("instruction_groups").select("id, name, description").eq("id", instruction_id).maybeSingle();
+    if (gErr) return { content: [{ type: "text", text: gErr.message }], isError: true };
+    if (!group) {
       return { content: [{ type: "text", text: "Instruction not found or not accessible. Use list_instructions to find an available id." }], isError: true };
     }
     const { data: version, error: vErr } = await client.from("instruction_versions").select("id, version_number, content, notes, created_at").eq("group_id", instruction_id).eq("is_production", true).maybeSingle();

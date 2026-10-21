@@ -12,7 +12,8 @@ export default defineTool({
     const { data, error } = await supabaseForUser(ctx)
       .from("categories")
       .select("id, name, description, color, created_at, updated_at")
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: true })
+      .limit(100);
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return {
       content: [{ type: "text", text: JSON.stringify(data ?? [], null, 2) }],
