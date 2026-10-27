@@ -11,43 +11,21 @@ import {
 import AppLayout from "@/components/AppLayout";
 import { toast } from "sonner";
 
-const PRESET_COLORS = ["#6366F1", "#10b981", "#3b82f6", "#8b5cf6", "#f59e0b", "#ef4444", "#ec4899", "#06b6d4"];
-
 const CategoryDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { data: categories = [] } = useCategories();
   const { data: groups = [] } = useGroups();
-  const createGroup = useCreateGroup();
   const updateGroup = useUpdateGroup();
   const deleteGroup = useDeleteGroup();
 
-  const [showCreate, setShowCreate] = useState(false);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [color, setColor] = useState(PRESET_COLORS[0]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
 
   const category = categories.find((c) => c.id === id);
   const instructions = groups.filter((g) => g.category_id === id);
 
-  const handleCreate = async () => {
-    if (!name.trim() || !id) return;
-    try {
-      await createGroup.mutateAsync({
-        name: name.trim(),
-        description: description.trim(),
-        category_id: id,
-        color,
-      });
-      setName("");
-      setDescription("");
-      setShowCreate(false);
-      toast.success("Instruction created");
-    } catch (e: any) {
-      toast.error(e.message);
-    }
-  };
+  const goToNewInstruction = () => navigate(`/instructions/new?category=${id}`);
 
   const handleRename = async (gid: string) => {
     if (!editName.trim()) return;
