@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import GroupsPage from "./pages/GroupsPage";
 import GroupDetail from "./pages/GroupDetail";
 import CategoryDetail from "./pages/CategoryDetail";
+import NewInstruction from "./pages/NewInstruction";
 
 import ThreadLibrary from "./pages/ThreadLibrary";
 import ThreadDetail from "./pages/ThreadDetail";
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/categories/:id" element={<ProtectedRoute><CategoryDetail /></ProtectedRoute>} />
             <Route path="/groups/:id" element={<ProtectedRoute><GroupDetail /></ProtectedRoute>} />
 
+            <Route path="/instructions/new" element={<ProtectedRoute><NewInstruction /></ProtectedRoute>} />
             <Route path="/instructions/:id" element={<ProtectedRoute><GroupDetail /></ProtectedRoute>} />
             <Route path="/threads" element={<ProtectedRoute><ThreadLibrary /></ProtectedRoute>} />
             <Route path="/threads/:id" element={<ProtectedRoute><ThreadDetail /></ProtectedRoute>} />

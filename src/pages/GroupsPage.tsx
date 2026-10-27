@@ -58,9 +58,16 @@ const GroupsPage = () => {
             <h1 className="text-xl font-bold text-foreground tracking-tight">Groups</h1>
             <p className="text-xs text-muted-foreground mt-1">High-level categories for your instructions</p>
           </div>
-          <Button size="sm" onClick={() => setShowCreate(true)} className="bg-primary text-primary-foreground hover:bg-primary/90 h-9 text-xs font-semibold">
-            <Plus className="w-3.5 h-3.5 mr-1.5" /> New Group
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" asChild className="h-9 text-xs font-semibold">
+              <Link to="/instructions/new">
+                <Plus className="w-3.5 h-3.5 mr-1.5" /> New Instruction
+              </Link>
+            </Button>
+            <Button size="sm" onClick={() => setShowCreate(true)} className="bg-primary text-primary-foreground hover:bg-primary/90 h-9 text-xs font-semibold">
+              <Plus className="w-3.5 h-3.5 mr-1.5" /> New Group
+            </Button>
+          </div>
         </div>
 
         {/* Create */}

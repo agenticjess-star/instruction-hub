@@ -8,6 +8,11 @@ Status: [x] verified, [~] implemented awaiting verification, [!] blocked, [ ] la
 - [ ] Verify signed-out guide at desktop/mobile sizes, copy/navigation, and authenticated create/read/comment flow with real data.
 - [ ] Extract final MCP manifest; verify hosted OAuth and tool execution. Publishing requires explicit user action.
 
+## Instruction creation workspace (user request, Oct 24)
+- [~] Dedicated `/instructions/new` page: name, category (existing or new), description, large instruction editor, save as v1 + production.
+- [~] "Improve with AI" panel built with assistant-ui components, streaming through the `improve-instruction` edge function (Lovable AI), with "Use this draft" insertion.
+- [ ] Verify: create flow end-to-end, AI panel streams and inserts drafts, entry points from Groups and Category pages.
+
 ## Later batches
 - [ ] Batch 2 (Prompt 3): instruction/version/diff column workspace.
 - [ ] Batch 3 (Prompt 4): real selection annotations and thread feedback.
